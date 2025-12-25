@@ -2,11 +2,13 @@
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Download, Printer } from 'lucide-react'
+import { Download, Printer, Plus } from 'lucide-react'
+import Link from 'next/link'
 import { formatCurrency } from '@/lib/utils/calculations'
 import { format } from 'date-fns'
 import type { Invoice } from '@/lib/types/billing'
 import type { StoreSettings } from '@/lib/types/settings'
+import { toast } from '@/lib/utils/toast'
 
 interface InvoiceViewProps {
   invoice: Invoice & {
@@ -43,9 +45,10 @@ export default function InvoiceView({ invoice, settings }: InvoiceViewProps) {
       a.click()
       window.URL.revokeObjectURL(url)
       document.body.removeChild(a)
+      toast.success('PDF downloaded successfully', invoice.invoice_number)
     } catch (error) {
       console.error('Error downloading PDF:', error)
-      alert('Failed to download PDF')
+      toast.error('Failed to download PDF', 'Please try again.')
     }
   }
 
@@ -56,6 +59,12 @@ export default function InvoiceView({ invoice, settings }: InvoiceViewProps) {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-4 flex justify-end gap-2 print:hidden">
+        <Link href="/billing">
+          <Button variant="outline">
+            <Plus className="mr-2 h-4 w-4" />
+            Create Another
+          </Button>
+        </Link>
         <Button variant="outline" onClick={handlePrint}>
           <Printer className="mr-2 h-4 w-4" />
           Print

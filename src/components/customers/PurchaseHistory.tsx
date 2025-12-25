@@ -12,6 +12,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/utils/calculations'
 import { format } from 'date-fns'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface PurchaseHistoryProps {
   customerId: string
@@ -52,7 +53,21 @@ export default function PurchaseHistory({ customerId }: PurchaseHistoryProps) {
   }, [customerId])
 
   if (loading) {
-    return <div>Loading...</div>
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Purchase History</CardTitle>
+          <CardDescription>All invoices for this customer</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

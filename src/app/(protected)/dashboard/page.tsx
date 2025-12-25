@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { TABLES } from '@/lib/constants'
 import StatsCards from '@/components/dashboard/StatsCards'
 import RecentSales from '@/components/dashboard/RecentSales'
+import SalesTrendChart from '@/components/dashboard/SalesTrendChart'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Plus, ShoppingCart, Package } from 'lucide-react'
@@ -96,6 +97,8 @@ export default async function DashboardPage() {
       </div>
 
       <StatsCards todaySales={todaySales} totalStock={totalStock} />
+
+      <SalesTrendChart initialInvoices={recentInvoices || []} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <RecentSales invoices={recentInvoices || []} />

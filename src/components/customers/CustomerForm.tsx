@@ -11,10 +11,14 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { Customer } from '@/lib/types/customer'
 import { useCreateCustomer, useUpdateCustomer } from '@/lib/hooks/useCustomers'
+import { toast } from '@/lib/utils/toast'
 
 const customerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  phone: z.string().min(10, 'Phone number must be at least 10 digits'),
+  phone: z
+    .string()
+    .min(10, 'Phone number must be at least 10 digits')
+    .regex(/^[0-9]{10,}$/, 'Phone number must contain only digits'),
 })
 
 type CustomerFormValues = z.infer<typeof customerSchema>
@@ -52,14 +56,17 @@ export default function CustomerForm({ initialData }: CustomerFormProps) {
     try {
       if (initialData) {
         await updateMutation.mutateAsync({ id: initialData.id, data })
+        toast.success('Customer updated successfully', data.name)
       } else {
         await createMutation.mutateAsync(data)
+        toast.success('Customer created successfully', data.name)
       }
       router.push('/customers')
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred. Please try again.'
       setError(errorMessage)
+      toast.error('Failed to save customer', errorMessage)
     }
   }
 

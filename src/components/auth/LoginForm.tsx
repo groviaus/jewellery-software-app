@@ -1,20 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Eye, EyeOff } from 'lucide-react'
+import { toast } from '@/lib/utils/toast'
 
 export default function LoginForm() {
   const router = useRouter()
   const supabase = createClient()
+  const emailInputRef = useRef<HTMLInputElement>(null)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Auto-focus email field on mount
+  useEffect(() => {
+    emailInputRef.current?.focus()
+    
+    // Load remembered email from localStorage
+    const rememberedEmail = localStorage.getItem('remembered_email')
+    if (rememberedEmail) {
+      setEmail(rememberedEmail)
+      setRememberMe(true)
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,14 +54,26 @@ export default function LoginForm() {
         return
       }
 
+      // Remember email if "Remember Me" is checked
+      if (rememberMe) {
+        localStorage.setItem('remembered_email', email)
+      } else {
+        localStorage.removeItem('remembered_email')
+      }
+
       // Set token in a simple cookie for server-side access
       // This is much simpler than Supabase's complex cookie chunking
-      document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=3600; SameSite=Lax`
+      const maxAge = rememberMe ? 86400 * 7 : 3600 // 7 days if remember me, 1 hour otherwise
+      document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`
 
+      toast.success('Login successful', 'Welcome back!')
+      
       // Redirect to dashboard
       window.location.href = '/dashboard'
     } catch (error: any) {
-      setError(error.message || 'An error occurred during login')
+      const errorMessage = error.message || 'An error occurred during login'
+      setError(errorMessage)
+      toast.error('Login failed', errorMessage)
     } finally {
       setLoading(false)
     }
@@ -68,6 +97,7 @@ export default function LoginForm() {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
+              ref={emailInputRef}
               id="email"
               type="email"
               placeholder="owner@example.com"
@@ -75,19 +105,49 @@ export default function LoginForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={loading}
+              autoComplete="email"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                autoComplete="current-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                disabled={loading}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="remember"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300"
               disabled={loading}
             />
+            <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+              Remember me
+            </Label>
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}

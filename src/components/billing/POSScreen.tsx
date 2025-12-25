@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,9 +10,11 @@ import ItemSelector from './ItemSelector'
 import CustomerSelector from './CustomerSelector'
 import InvoicePreview from './InvoicePreview'
 import type { CartItem } from '@/lib/types/billing'
-import { ShoppingCart, X } from 'lucide-react'
+import { ShoppingCart, X, History } from 'lucide-react'
 import { useSettings } from '@/lib/hooks/useSettings'
 import { useCreateInvoice } from '@/lib/hooks/useInvoices'
+import { toast } from '@/lib/utils/toast'
+import { getLastGoldRate, saveGoldRate, getGoldRateHistory } from '@/lib/utils/gold-rate'
 
 export default function POSScreen() {
   const router = useRouter()
@@ -26,6 +28,14 @@ export default function POSScreen() {
   const gstRate = settings?.gst_rate || 3.0
 
   const createInvoiceMutation = useCreateInvoice()
+
+  // Load last used gold rate on mount
+  useEffect(() => {
+    const lastRate = getLastGoldRate()
+    if (lastRate) {
+      setGoldRate(lastRate.toString())
+    }
+  }, [])
 
   const addToCart = (item: CartItem) => {
     setCart((prev) => {
@@ -56,11 +66,13 @@ export default function POSScreen() {
   const handleCheckout = async () => {
     if (cart.length === 0) {
       setError('Cart is empty')
+      toast.warning('Cart is empty', 'Please add items before checkout')
       return
     }
 
     if (!goldRate || parseFloat(goldRate) <= 0) {
       setError('Please enter a valid gold rate')
+      toast.warning('Invalid gold rate', 'Please enter a valid gold rate')
       return
     }
 
@@ -73,12 +85,22 @@ export default function POSScreen() {
         gold_rate: parseFloat(goldRate),
       })
 
+      // Save gold rate to history
+      saveGoldRate(parseFloat(goldRate))
+      
+      toast.success('Invoice created successfully', `Invoice #${invoice.invoice_number}`)
+      
+      // Clear cart and reset form (keep gold rate)
+      setCart([])
+      setCustomerId(null)
+      
       // Redirect to invoice page
       router.push(`/billing/invoice/${invoice.id}`)
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred. Please try again.'
       setError(errorMessage)
+      toast.error('Failed to create invoice', errorMessage)
     }
   }
 
@@ -87,19 +109,59 @@ export default function POSScreen() {
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Gold Rate</CardTitle>
+            <CardTitle className="flex items-center justify-between">
+              <span>Gold Rate</span>
+              {getGoldRateHistory().length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const history = getGoldRateHistory()
+                    if (history.length > 0) {
+                      setGoldRate(history[0].rate.toString())
+                    }
+                  }}
+                  className="text-xs"
+                >
+                  <History className="mr-1 h-3 w-3" />
+                  Last: ₹{getLastGoldRate()?.toFixed(2)}
+                </Button>
+              )}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <Label htmlFor="gold_rate">Current Gold Rate (₹ per gram)</Label>
-              <Input
-                id="gold_rate"
-                type="number"
-                step="0.01"
-                value={goldRate}
-                onChange={(e) => setGoldRate(e.target.value)}
-                placeholder="Enter gold rate"
-              />
+            <div className="space-y-3">
+              <div className="space-y-2">
+                <Label htmlFor="gold_rate">Current Gold Rate (₹ per gram)</Label>
+                <Input
+                  id="gold_rate"
+                  type="number"
+                  step="0.01"
+                  value={goldRate}
+                  onChange={(e) => setGoldRate(e.target.value)}
+                  placeholder="Enter gold rate"
+                />
+              </div>
+              
+              {/* Quick select buttons for recent rates */}
+              {getGoldRateHistory().length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Recent Rates</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {getGoldRateHistory().slice(0, 3).map((entry, idx) => (
+                      <Button
+                        key={idx}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setGoldRate(entry.rate.toString())}
+                        className="text-xs"
+                      >
+                        ₹{entry.rate.toFixed(2)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

@@ -16,6 +16,9 @@ import {
 import { formatCurrency } from '@/lib/utils/calculations'
 import { format } from 'date-fns'
 import { useDailySalesReport } from '@/lib/hooks/useReports'
+import { Skeleton } from '@/components/ui/skeleton'
+import { exportToCSV } from '@/lib/utils/csv-export'
+import { Download } from 'lucide-react'
 
 export default function DailySalesReport() {
   const [startDate, setStartDate] = useState(
@@ -36,10 +39,35 @@ export default function DailySalesReport() {
   const totalGST = reports.reduce((sum, r) => sum + r.total_gst, 0)
   const totalInvoices = reports.reduce((sum, r) => sum + r.total_invoices, 0)
 
+  const handleExportCSV = () => {
+    if (reports.length === 0) {
+      return
+    }
+
+    const exportData = reports.map((report) => ({
+      Date: format(new Date(report.date), 'MMM dd, yyyy'),
+      Invoices: report.total_invoices,
+      Revenue: report.total_revenue,
+      GST: report.total_gst,
+      'Gold Value': report.total_gold_value,
+      'Making Charges': report.total_making_charges,
+    }))
+
+    exportToCSV(exportData, `daily-sales-${startDate}-to-${endDate}`)
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Daily Sales Report</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Daily Sales Report</CardTitle>
+          {reports.length > 0 && (
+            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -67,8 +95,78 @@ export default function DailySalesReport() {
             </Button>
           </div>
         </div>
+        
+        {/* Date Range Presets */}
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const today = new Date()
+              setEndDate(format(today, 'yyyy-MM-dd'))
+              setStartDate(format(today, 'yyyy-MM-dd'))
+              setTimeout(() => fetchReports(), 100)
+            }}
+          >
+            Today
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const today = new Date()
+              const weekAgo = new Date(today)
+              weekAgo.setDate(today.getDate() - 7)
+              setEndDate(format(today, 'yyyy-MM-dd'))
+              setStartDate(format(weekAgo, 'yyyy-MM-dd'))
+              setTimeout(() => fetchReports(), 100)
+            }}
+          >
+            This Week
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const today = new Date()
+              const monthAgo = new Date(today)
+              monthAgo.setMonth(today.getMonth() - 1)
+              setEndDate(format(today, 'yyyy-MM-dd'))
+              setStartDate(format(monthAgo, 'yyyy-MM-dd'))
+              setTimeout(() => fetchReports(), 100)
+            }}
+          >
+            This Month
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const today = new Date()
+              const yearStart = new Date(today.getFullYear(), 0, 1)
+              setEndDate(format(today, 'yyyy-MM-dd'))
+              setStartDate(format(yearStart, 'yyyy-MM-dd'))
+              setTimeout(() => fetchReports(), 100)
+            }}
+          >
+            This Year
+          </Button>
+        </div>
 
-        {reports.length > 0 && (
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          </div>
+        ) : reports.length > 0 ? (
           <>
             <div className="mb-6 grid grid-cols-3 gap-4">
               <div className="rounded-lg border p-4">
@@ -122,11 +220,9 @@ export default function DailySalesReport() {
               </Table>
             </div>
           </>
-        )}
-
-        {reports.length === 0 && !isLoading && (
+        ) : !isLoading ? (
           <p className="text-center text-gray-500">No data found for the selected period</p>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   )

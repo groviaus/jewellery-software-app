@@ -11,12 +11,22 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import type { StoreSettings } from '@/lib/types/settings'
 import { useCreateSettings, useUpdateSettings } from '@/lib/hooks/useSettings'
+import { toast } from '@/lib/utils/toast'
 
 const settingsSchema = z.object({
   store_name: z.string().min(1, 'Store name is required'),
-  gst_number: z.string().optional(),
+  gst_number: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(val),
+      'Invalid GST number format (e.g., 29ABCDE1234F1Z5)'
+    ),
   address: z.string().optional(),
-  gst_rate: z.number().min(0).max(100),
+  gst_rate: z
+    .number()
+    .min(0, 'GST rate must be 0 or greater')
+    .max(100, 'GST rate cannot exceed 100%'),
 })
 
 type SettingsFormData = z.infer<typeof settingsSchema>
@@ -28,7 +38,6 @@ interface StoreSettingsFormProps {
 export default function StoreSettingsForm({ initialData }: StoreSettingsFormProps) {
   const router = useRouter()
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
 
   const createMutation = useCreateSettings()
   const updateMutation = useUpdateSettings()
@@ -63,23 +72,22 @@ export default function StoreSettingsForm({ initialData }: StoreSettingsFormProp
 
   const onSubmit = async (data: SettingsFormData) => {
     setError('')
-    setSuccess(false)
 
     try {
       if (initialData) {
         await updateMutation.mutateAsync(data)
+        toast.success('Settings updated successfully')
       } else {
         await createMutation.mutateAsync(data)
+        toast.success('Settings saved successfully')
       }
 
-      setSuccess(true)
       router.refresh()
-
-      setTimeout(() => setSuccess(false), 3000)
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred. Please try again.'
       setError(errorMessage)
+      toast.error('Failed to save settings', errorMessage)
     }
   }
 
@@ -96,11 +104,6 @@ export default function StoreSettingsForm({ initialData }: StoreSettingsFormProp
           {error && (
             <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
               {error}
-            </div>
-          )}
-          {success && (
-            <div className="rounded-md bg-green-500/15 p-3 text-sm text-green-700">
-              Settings saved successfully!
             </div>
           )}
 

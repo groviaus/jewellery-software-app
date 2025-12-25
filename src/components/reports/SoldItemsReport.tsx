@@ -9,21 +9,62 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils/calculations'
 import { format } from 'date-fns'
 import { useSoldItemsReport } from '@/lib/hooks/useReports'
+import { Skeleton } from '@/components/ui/skeleton'
+import { exportToCSV } from '@/lib/utils/csv-export'
+import { Download } from 'lucide-react'
 
 export default function SoldItemsReport() {
   const { data: items = [], isLoading } = useSoldItemsReport()
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Sold Items</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const handleExportCSV = () => {
+    if (items.length === 0) {
+      return
+    }
+
+    const exportData = items.map((item) => ({
+      'Item Name': item.item_name,
+      SKU: item.sku,
+      'Quantity Sold': item.quantity_sold,
+      'Total Revenue': item.total_revenue,
+      'Last Sold': format(new Date(item.last_sold_date), 'MMM dd, yyyy'),
+    }))
+
+    exportToCSV(exportData, 'sold-items-report')
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Sold Items</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Sold Items</CardTitle>
+          {items.length > 0 && (
+            <Button variant="outline" size="sm" onClick={handleExportCSV}>
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         {items.length === 0 ? (

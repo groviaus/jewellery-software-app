@@ -21,6 +21,7 @@ import {
   useCreateInventoryItem,
   useUpdateInventoryItem,
 } from '@/lib/hooks/useInventory'
+import { toast } from '@/lib/utils/toast'
 
 const itemSchema = z.object({
   name: z.string().min(1, 'Item name is required'),
@@ -81,14 +82,17 @@ export default function ItemForm({ initialData }: ItemFormProps) {
     try {
       if (initialData) {
         await updateMutation.mutateAsync({ id: initialData.id, data })
+        toast.success('Item updated successfully', data.name)
       } else {
         await createMutation.mutateAsync(data as any)
+        toast.success('Item created successfully', data.name)
       }
       router.push('/inventory')
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred. Please try again.'
       setError(errorMessage)
+      toast.error('Failed to save item', errorMessage)
     }
   }
 

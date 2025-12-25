@@ -10,12 +10,20 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useStockSummary } from '@/lib/hooks/useReports'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function StockSummary() {
   const { data: summary, isLoading } = useStockSummary()
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-32 w-full" />
+        ))}
+        <Skeleton className="h-32 w-full md:col-span-2" />
+      </div>
+    )
   }
 
   if (!summary) {

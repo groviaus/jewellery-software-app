@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
-import { Edit, Trash2, Search, History } from 'lucide-react'
+import { Search, Download } from 'lucide-react'
 import type { Customer } from '@/lib/types/customer'
 import {
   Dialog,
@@ -23,6 +23,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useCustomers, useDeleteCustomer } from '@/lib/hooks/useCustomers'
+import { toast } from '@/lib/utils/toast'
+import { Skeleton } from '@/components/ui/skeleton'
+import CustomerRow from './CustomerRow'
+import { exportToCSV } from '@/lib/utils/csv-export'
 
 interface CustomerTableProps {
   customers: Customer[]
@@ -59,27 +63,55 @@ export default function CustomerTable({ customers: initialCustomers }: CustomerT
       await deleteMutation.mutateAsync(customerToDelete.id)
       setDeleteDialogOpen(false)
       setCustomerToDelete(null)
+      toast.success('Customer deleted successfully')
     } catch (error) {
       console.error('Error deleting customer:', error)
-      alert('Failed to delete customer. Please try again.')
+      toast.error('Failed to delete customer', 'Please try again.')
     }
   }
 
   if (isLoading && customers.length === 0) {
-    return <div>Loading customers...</div>
+    return (
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full" />
+        <div className="space-y-2">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-16 w-full" />
+          ))}
+        </div>
+      </div>
+    )
   }
 
   return (
     <>
       <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Search by name or phone..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <Input
+              placeholder="Search by name or phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const exportData = filteredCustomers.map((customer) => ({
+                Name: customer.name,
+                Phone: customer.phone,
+                'Created Date': new Date(customer.created_at).toLocaleDateString(),
+              }))
+              exportToCSV(exportData, 'customers-export')
+              toast.success('Customers exported to CSV')
+            }}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export
+          </Button>
         </div>
       </div>
 
@@ -89,47 +121,25 @@ export default function CustomerTable({ customers: initialCustomers }: CustomerT
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Phone</TableHead>
-              <TableHead>Created</TableHead>
+              <TableHead>Total Purchases</TableHead>
+              <TableHead>Last Purchase</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCustomers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="text-center text-gray-500">
+                <TableCell colSpan={5} className="text-center text-gray-500">
                   {searchQuery ? 'No customers found matching your search' : 'No customers yet'}
                 </TableCell>
               </TableRow>
             ) : (
               filteredCustomers.map((customer) => (
-                <TableRow key={customer.id}>
-                  <TableCell className="font-medium">{customer.name}</TableCell>
-                  <TableCell>{customer.phone}</TableCell>
-                  <TableCell>
-                    {new Date(customer.created_at).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Link href={`/customers/${customer.id}/history`}>
-                        <Button variant="ghost" size="sm">
-                          <History className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Link href={`/customers/${customer.id}/edit`}>
-                        <Button variant="ghost" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteClick(customer)}
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <CustomerRow
+                  key={customer.id}
+                  customer={customer}
+                  onDelete={handleDeleteClick}
+                />
               ))
             )}
           </TableBody>
