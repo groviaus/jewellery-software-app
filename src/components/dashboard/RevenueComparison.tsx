@@ -67,7 +67,7 @@ export default function RevenueComparison() {
 
   if (isLoading) {
     return (
-      <Card className="h-[500px] flex flex-col">
+      <Card className="h-[340px] flex flex-col">
         <CardHeader>
           <CardTitle>Revenue Comparison</CardTitle>
         </CardHeader>
@@ -87,7 +87,7 @@ export default function RevenueComparison() {
   ]
 
   return (
-    <Card className="h-[500px] flex flex-col">
+    <Card className="h-[330px] flex flex-col">
       <CardHeader>
         <CardTitle>Revenue Comparison</CardTitle>
       </CardHeader>

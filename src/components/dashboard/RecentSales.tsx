@@ -46,7 +46,7 @@ export default function RecentSales({ invoices: initialInvoices }: RecentSalesPr
   }))
 
   return (
-    <Card className="h-[500px] flex flex-col">
+    <Card className="h-[330px] flex flex-col">
       <CardHeader>
         <CardTitle>Recent Sales</CardTitle>
       </CardHeader>
