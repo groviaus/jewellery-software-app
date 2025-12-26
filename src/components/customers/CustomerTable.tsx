@@ -86,7 +86,7 @@ export default function CustomerTable({ customers: initialCustomers }: CustomerT
   return (
     <>
       <div className="mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <Input
@@ -99,6 +99,7 @@ export default function CustomerTable({ customers: initialCustomers }: CustomerT
           <Button
             variant="outline"
             size="sm"
+            className="w-full sm:w-auto"
             onClick={() => {
               const exportData = filteredCustomers.map((customer) => ({
                 Name: customer.name,
@@ -115,21 +116,21 @@ export default function CustomerTable({ customers: initialCustomers }: CustomerT
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto -mx-3 sm:mx-0">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Total Purchases</TableHead>
-              <TableHead>Last Purchase</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="text-xs sm:text-sm">Name</TableHead>
+              <TableHead className="text-xs sm:text-sm">Phone</TableHead>
+              <TableHead className="text-xs sm:text-sm hidden md:table-cell">Total Purchases</TableHead>
+              <TableHead className="text-xs sm:text-sm hidden lg:table-cell">Last Purchase</TableHead>
+              <TableHead className="text-right text-xs sm:text-sm">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredCustomers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center text-gray-500">
+                <TableCell colSpan={5} className="text-center text-sm text-gray-500">
                   {searchQuery ? 'No customers found matching your search' : 'No customers yet'}
                 </TableCell>
               </TableRow>

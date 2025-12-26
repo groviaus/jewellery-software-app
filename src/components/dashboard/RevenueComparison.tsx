@@ -87,63 +87,63 @@ export default function RevenueComparison() {
   ]
 
   return (
-    <Card className="h-[330px] flex flex-col">
-      <CardHeader>
-        <CardTitle>Revenue Comparison</CardTitle>
+    <Card className="h-auto lg:h-[330px] flex flex-col">
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-lg sm:text-xl">Revenue Comparison</CardTitle>
       </CardHeader>
       <CardContent className="flex-1">
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* This Month */}
-          <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="flex items-center justify-between rounded-lg border p-3 sm:p-4">
             <div>
-              <p className="text-sm text-muted-foreground">This Month</p>
-              <p className="text-2xl font-bold">{formatCurrency(thisMonthRevenue || 0)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">This Month</p>
+              <p className="text-xl sm:text-2xl font-bold">{formatCurrency(thisMonthRevenue || 0)}</p>
               <p className="text-xs text-muted-foreground">
                 {monthNames[currentMonth]} {currentYear}
               </p>
             </div>
-            <div className="rounded-full bg-blue-500/20 dark:bg-blue-500/10 p-3">
-              <TrendingUp className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+            <div className="rounded-full bg-blue-500/20 dark:bg-blue-500/10 p-2 sm:p-3">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 dark:text-blue-400" />
             </div>
           </div>
 
           {/* Last Month */}
-          <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="flex items-center justify-between rounded-lg border p-3 sm:p-4">
             <div>
-              <p className="text-sm text-muted-foreground">Last Month</p>
-              <p className="text-2xl font-bold">{formatCurrency(lastMonthRevenue || 0)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">Last Month</p>
+              <p className="text-xl sm:text-2xl font-bold">{formatCurrency(lastMonthRevenue || 0)}</p>
               <p className="text-xs text-muted-foreground">
                 {monthNames[lastMonth]} {lastMonthYear}
               </p>
             </div>
-            <div className="rounded-full bg-muted p-3">
-              <TrendingDown className="h-6 w-6 text-muted-foreground" />
+            <div className="rounded-full bg-muted p-2 sm:p-3">
+              <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground" />
             </div>
           </div>
 
           {/* Comparison */}
           {comparison && (
-            <div className={`rounded-lg border p-4 ${comparison.isPositive
+            <div className={`rounded-lg border p-3 sm:p-4 ${comparison.isPositive
               ? 'bg-green-500/20 dark:bg-green-500/10 border-green-500/30 dark:border-green-500/20'
               : 'bg-red-500/20 dark:bg-red-500/10 border-red-500/30 dark:border-red-500/20'
               }`}>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Change</p>
-                  <p className={`text-xl font-bold ${comparison.isPositive
+                  <p className="text-xs sm:text-sm font-medium text-foreground">Change</p>
+                  <p className={`text-lg sm:text-xl font-bold ${comparison.isPositive
                     ? 'text-green-700 dark:text-green-400'
                     : 'text-red-700 dark:text-red-400'
                     }`}>
                     {comparison.isPositive ? '+' : ''}{formatCurrency(comparison.difference)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2">
                   {comparison.isPositive ? (
-                    <ArrowUpRight className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <ArrowUpRight className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 dark:text-green-400" />
                   ) : (
-                    <ArrowDownRight className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <ArrowDownRight className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 dark:text-red-400" />
                   )}
-                  <span className={`text-lg font-semibold ${comparison.isPositive
+                  <span className={`text-base sm:text-lg font-semibold ${comparison.isPositive
                     ? 'text-green-700 dark:text-green-400'
                     : 'text-red-700 dark:text-red-400'
                     }`}>

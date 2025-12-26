@@ -137,4 +137,67 @@
     scrollbar-width: none;
     /* Firefox */
   }
+
+  /* Responsive container utilities */
+  .container-responsive {
+    @apply w-full px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Responsive text utilities */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl;
+  }
+
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl;
+  }
+
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl;
+  }
+
+  .text-responsive-3xl {
+    @apply text-2xl sm:text-3xl lg:text-4xl;
+  }
+
+  /* Mobile-optimized spacing */
+  .space-y-responsive {
+    @apply space-y-4 sm:space-y-6 lg:space-y-8;
+  }
+
+  .gap-responsive {
+    @apply gap-4 sm:gap-6;
+  }
+
+  .p-responsive {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+
+  /* Mobile table wrapper */
+  .table-responsive {
+    @apply w-full overflow-x-auto -mx-4 sm:mx-0;
+  }
+
+  .table-responsive table {
+    @apply min-w-full;
+  }
+
+  /* Touch-friendly buttons on mobile */
+  @media (max-width: 640px) {
+    .btn-touch {
+      @apply min-h-[44px] min-w-[44px];
+    }
+  }
 }

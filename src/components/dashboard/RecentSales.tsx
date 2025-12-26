@@ -46,9 +46,9 @@ export default function RecentSales({ invoices: initialInvoices }: RecentSalesPr
   }))
 
   return (
-    <Card className="h-[330px] flex flex-col">
-      <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
+    <Card className="h-auto lg:h-[330px] flex flex-col">
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-lg sm:text-xl">Recent Sales</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {isLoading && (!initialInvoices || initialInvoices.length === 0) ? (
@@ -58,22 +58,22 @@ export default function RecentSales({ invoices: initialInvoices }: RecentSalesPr
             ))}
           </div>
         ) : !normalizedInvoices || normalizedInvoices.length === 0 ? (
-          <p className="text-center text-gray-500">No recent sales</p>
+          <p className="text-center text-sm text-gray-500">No recent sales</p>
         ) : (
-          <div className="h-full overflow-y-auto scrollbar-hide rounded-md border">
+          <div className="h-full overflow-x-auto overflow-y-auto scrollbar-hide rounded-md border -mx-3 sm:mx-0">
             <Table>
               <TableHeader className="sticky top-0 bg-background z-10">
                 <TableRow>
-                  <TableHead>Invoice #</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Invoice #</TableHead>
+                  <TableHead className="text-xs sm:text-sm">Customer</TableHead>
+                  <TableHead className="text-xs sm:text-sm hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="text-right text-xs sm:text-sm">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {normalizedInvoices.map((invoice) => (
                   <TableRow key={invoice.id}>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
                       <Link
                         href={`/billing/invoice/${invoice.id}`}
                         className="text-primary hover:underline"
@@ -81,13 +81,15 @@ export default function RecentSales({ invoices: initialInvoices }: RecentSalesPr
                         {invoice.invoice_number}
                       </Link>
                     </TableCell>
-                    <TableCell>
-                      {invoice.customer?.name || 'Walk-in Customer'}
+                    <TableCell className="text-xs sm:text-sm">
+                      <span className="line-clamp-1">
+                        {invoice.customer?.name || 'Walk-in Customer'}
+                      </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="text-xs sm:text-sm hidden sm:table-cell whitespace-nowrap">
                       {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right text-xs sm:text-sm whitespace-nowrap">
                       {formatCurrency(parseFloat(invoice.total_amount.toString()))}
                     </TableCell>
                   </TableRow>

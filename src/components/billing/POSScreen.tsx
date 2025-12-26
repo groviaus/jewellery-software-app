@@ -173,13 +173,13 @@ export default function POSScreen() {
 
       // Save gold rate to history
       saveGoldRate(parseFloat(goldRate))
-      
+
       toast.success('Invoice created successfully', `Invoice #${invoice.invoice_number}`)
-      
+
       // Clear cart and reset form (keep gold rate)
       setCart([])
       setCustomerId(null)
-      
+
       // Redirect to invoice page
       router.push(`/billing/invoice/${invoice.id}`)
     } catch (err) {
@@ -191,22 +191,23 @@ export default function POSScreen() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2 space-y-6">
+    <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+      <div className="lg:col-span-2 space-y-4 sm:space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span>Gold Rate</span>
-              <div className="flex items-center gap-2">
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <span className="text-lg sm:text-xl">Gold Rate</span>
+              <div className="flex flex-wrap items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleFetchGoldRate}
                   disabled={isFetchingGoldRate}
-                  className="text-xs"
+                  className="text-xs flex-1 sm:flex-none"
                 >
                   <RefreshCw className={`mr-1 h-3 w-3 ${isFetchingGoldRate ? 'animate-spin' : ''}`} />
-                  {isFetchingGoldRate ? 'Fetching...' : 'Fetch Current Rate'}
+                  <span className="hidden sm:inline">{isFetchingGoldRate ? 'Fetching...' : 'Fetch Current Rate'}</span>
+                  <span className="sm:hidden">{isFetchingGoldRate ? 'Fetching...' : 'Fetch Rate'}</span>
                 </Button>
                 {getGoldRateHistory().length > 0 && (
                   <Button
@@ -218,7 +219,7 @@ export default function POSScreen() {
                         setGoldRate(history[0].rate.toString())
                       }
                     }}
-                    className="text-xs"
+                    className="text-xs flex-1 sm:flex-none"
                   >
                     <History className="mr-1 h-3 w-3" />
                     Last: ₹{getLastGoldRate()?.toFixed(2)}
@@ -231,9 +232,9 @@ export default function POSScreen() {
             <div className="space-y-3">
               {/* Display rates by carat if available */}
               {goldRatesByCarat && (
-                <div className="rounded-lg border bg-muted/50 p-3">
+                <div className="rounded-lg border bg-muted/50 p-2 sm:p-3">
                   <Label className="text-xs font-semibold mb-2 block">Current Market Rates (₹ per gram)</Label>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs sm:text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">24K:</span>
                       <span className="font-medium">₹{goldRatesByCarat['24K'].toFixed(2)}</span>
@@ -250,7 +251,7 @@ export default function POSScreen() {
                       <span className="text-muted-foreground">14K:</span>
                       <span className="font-medium">₹{goldRatesByCarat['14K'].toFixed(2)}</span>
                     </div>
-                    <div className="flex justify-between col-span-2">
+                    <div className="flex justify-between col-span-2 sm:col-span-1">
                       <span className="text-muted-foreground">10K:</span>
                       <span className="font-medium">₹{goldRatesByCarat['10K'].toFixed(2)}</span>
                     </div>
@@ -282,7 +283,7 @@ export default function POSScreen() {
                   placeholder="Enter gold rate"
                 />
               </div>
-              
+
               {/* Quick select buttons for recent rates */}
               {getGoldRateHistory().length > 0 && (
                 <div className="space-y-2">
@@ -307,8 +308,8 @@ export default function POSScreen() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Select Customer</CardTitle>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-lg sm:text-xl">Select Customer</CardTitle>
           </CardHeader>
           <CardContent>
             <CustomerSelector
@@ -319,8 +320,8 @@ export default function POSScreen() {
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Add Items</CardTitle>
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="text-lg sm:text-xl">Add Items</CardTitle>
           </CardHeader>
           <CardContent>
             <ItemSelector onAddToCart={addToCart} />
@@ -329,10 +330,10 @@ export default function POSScreen() {
       </div>
 
       <div className="lg:col-span-1">
-        <Card className="sticky top-4">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
+        <Card className="lg:sticky lg:top-4">
+          <CardHeader className="pb-3 sm:pb-6">
+            <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5" />
               Cart ({cart.length})
             </CardTitle>
           </CardHeader>
@@ -353,15 +354,15 @@ export default function POSScreen() {
               onDuplicateItem={duplicateCartItem}
             />
 
-            <div className="mt-6 space-y-2">
+            <div className="mt-4 sm:mt-6 space-y-2">
               <Button
-                className="w-full"
+                className="w-full text-sm sm:text-base"
                 onClick={handleCheckout}
                 disabled={createInvoiceMutation.isPending || cart.length === 0 || !goldRate}
               >
                 {createInvoiceMutation.isPending ? 'Processing...' : 'Generate Invoice'}
               </Button>
-              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
+              <div className="hidden sm:flex items-center justify-center gap-1 text-xs text-muted-foreground">
                 <Keyboard className="h-3 w-3" />
                 <span>Ctrl+Enter to checkout</span>
               </div>

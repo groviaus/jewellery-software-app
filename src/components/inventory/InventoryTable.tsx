@@ -378,7 +378,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
 
       {/* Filters */}
       <div className="mb-4 space-y-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -388,16 +388,16 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
               className="pl-10"
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <AdvancedFilters
               onApplyFilters={handleApplyAdvancedFilters}
               onClearFilters={handleClearAdvancedFilters}
             />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="flex-1 sm:flex-none">
                   <Columns className="mr-2 h-4 w-4" />
-                  Columns
+                  <span className="hidden sm:inline">Columns</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -456,6 +456,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
             <Button
               variant="outline"
               size="sm"
+              className="flex-1 sm:flex-none"
               onClick={() => {
                 const exportData = filteredAndSortedItems.map((item) => ({
                   Name: item.name,
@@ -472,7 +473,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
               }}
             >
               <Download className="mr-2 h-4 w-4" />
-              Export
+              <span className="hidden sm:inline">Export</span>
             </Button>
           </div>
         </div>
@@ -518,9 +519,9 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Metal Type</label>
+            <label className="text-xs sm:text-sm font-medium">Metal Type</label>
             <Select value={metalTypeFilter} onValueChange={setMetalTypeFilter}>
               <SelectTrigger>
                 <SelectValue />
@@ -534,7 +535,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Stock Status</label>
+            <label className="text-xs sm:text-sm font-medium">Stock Status</label>
             <Select value={stockFilter} onValueChange={setStockFilter}>
               <SelectTrigger>
                 <SelectValue />
@@ -548,7 +549,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
             </Select>
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-medium">Sort By</label>
+            <label className="text-xs sm:text-sm font-medium">Sort By</label>
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger>
                 <SelectValue />
@@ -563,7 +564,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
         </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto -mx-3 sm:mx-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -575,9 +576,9 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
                 >
                   <CheckSquare
                     className={`h-4 w-4 ${selectedItems.size === filteredAndSortedItems.length &&
-                        filteredAndSortedItems.length > 0
-                        ? 'text-primary'
-                        : 'text-muted-foreground'
+                      filteredAndSortedItems.length > 0
+                      ? 'text-primary'
+                      : 'text-muted-foreground'
                       }`}
                   />
                 </button>
@@ -756,10 +757,10 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
                           <div className="flex items-center gap-1">
                             <span
                               className={`font-medium ${isOutOfStock
-                                  ? 'text-destructive'
-                                  : isLowStock
-                                    ? 'text-orange-600 dark:text-orange-400'
-                                    : 'text-green-600 dark:text-green-400'
+                                ? 'text-destructive'
+                                : isLowStock
+                                  ? 'text-orange-600 dark:text-orange-400'
+                                  : 'text-green-600 dark:text-green-400'
                                 }`}
                             >
                               {item.quantity}

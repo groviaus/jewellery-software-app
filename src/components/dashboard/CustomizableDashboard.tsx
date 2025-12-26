@@ -146,26 +146,26 @@ export default function CustomizableDashboard({
         return <RevenueComparison />
       case 'quick-actions':
         return (
-          <div className="rounded-lg border bg-card p-6">
-            <h2 className="mb-4 text-xl font-semibold text-card-foreground">Quick Actions</h2>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="rounded-lg border bg-card p-4 sm:p-6">
+            <h2 className="mb-3 sm:mb-4 text-lg sm:text-xl font-semibold text-card-foreground">Quick Actions</h2>
+            <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
               <a href="/inventory" className="w-full">
-                <button className="w-full rounded-md border border-input bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+                <button className="w-full rounded-md border border-input bg-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
                   View Inventory
                 </button>
               </a>
               <a href="/customers" className="w-full">
-                <button className="w-full rounded-md border border-input bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+                <button className="w-full rounded-md border border-input bg-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
                   View Customers
                 </button>
               </a>
               <a href="/reports" className="w-full">
-                <button className="w-full rounded-md border border-input bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+                <button className="w-full rounded-md border border-input bg-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
                   View Reports
                 </button>
               </a>
               <a href="/settings" className="w-full">
-                <button className="w-full rounded-md border border-input bg-secondary px-4 py-2 text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
+                <button className="w-full rounded-md border border-input bg-secondary px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium text-secondary-foreground transition-colors hover:bg-accent hover:text-accent-foreground">
                   Settings
                 </button>
               </a>
@@ -216,7 +216,7 @@ export default function CustomizableDashboard({
   })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <DashboardControls
         onRefresh={handleRefresh}
         onWidgetVisibilityChange={handleWidgetVisibilityChange}
@@ -232,14 +232,14 @@ export default function CustomizableDashboard({
           items={sortableIds}
           strategy={verticalListSortingStrategy}
         >
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {groupedWidgets.map((widgetOrGroup, index) => {
               if (Array.isArray(widgetOrGroup)) {
                 // Render grid layout for grouped widgets as a single sortable unit
                 const groupId = `grid-${widgetOrGroup.map(w => w.id).join('-')}`
                 return (
                   <SortableWidget key={groupId} id={groupId}>
-                    <div className="grid gap-6 lg:grid-cols-2">
+                    <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2">
                       {widgetOrGroup.map((widget) => (
                         <div key={widget.id}>
                           {renderWidget(widget)}
