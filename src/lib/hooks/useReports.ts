@@ -86,6 +86,7 @@ export function useDailySalesReport(
   return useQuery({
     queryKey: reportKeys.daily(from, to, customerId, metalType),
     queryFn: () => fetchDailySalesReport(from, to, customerId, metalType),
+    enabled: !!(from && to), // Only fetch when both dates are provided
   })
 }
 

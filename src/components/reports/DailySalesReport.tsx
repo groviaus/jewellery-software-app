@@ -39,9 +39,9 @@ export default function DailySalesReport() {
   const [selectedMetalType, setSelectedMetalType] = useState<string>('all')
   
   const { data: customers = [] } = useCustomers()
-  const { data: reports = [], isLoading, refetch } = useDailySalesReport(
-    startDate ? `${startDate}T00:00:00.000Z` : undefined,
-    endDate ? `${endDate}T23:59:59.999Z` : undefined,
+  const { data: reports = [], isLoading, error, refetch } = useDailySalesReport(
+    startDate || undefined,
+    endDate || undefined,
     selectedCustomer !== 'all' ? selectedCustomer : undefined,
     selectedMetalType !== 'all' ? selectedMetalType : undefined
   )
@@ -267,15 +267,15 @@ export default function DailySalesReport() {
           <>
             <div className="mb-6 grid grid-cols-3 gap-4">
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(totalRevenue)}</p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total GST</p>
+                <p className="text-sm text-muted-foreground">Total GST</p>
                 <p className="text-2xl font-bold">{formatCurrency(totalGST)}</p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total Invoices</p>
+                <p className="text-sm text-muted-foreground">Total Invoices</p>
                 <p className="text-2xl font-bold">{totalInvoices}</p>
               </div>
             </div>
@@ -317,8 +317,28 @@ export default function DailySalesReport() {
               </Table>
             </div>
           </>
+        ) : error ? (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+            <p className="text-destructive font-medium">Error loading report</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : 'An unexpected error occurred'}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="mt-3"
+            >
+              Try Again
+            </Button>
+          </div>
         ) : !isLoading ? (
-          <p className="text-center text-gray-500">No data found for the selected period</p>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No data found for the selected period</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Try adjusting the date range or filters
+            </p>
+          </div>
         ) : null}
       </CardContent>
     </Card>

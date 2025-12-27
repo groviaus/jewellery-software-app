@@ -16,40 +16,66 @@ export async function GET(request: Request) {
     const customerId = searchParams.get('customer_id')
     const metalType = searchParams.get('metal_type')
 
-    let query = supabase
+    // Get invoices first
+    let invoiceQuery = supabase
       .from(TABLES.INVOICES)
-      .select('*, invoice_items(*, item:jewellery_items(*))')
+      .select('*')
       .eq('user_id', user.id)
 
     if (startDate) {
-      query = query.gte('created_at', `${startDate}T00:00:00`)
+      invoiceQuery = invoiceQuery.gte('created_at', `${startDate}T00:00:00`)
     }
     if (endDate) {
-      query = query.lte('created_at', `${endDate}T23:59:59`)
+      invoiceQuery = invoiceQuery.lte('created_at', `${endDate}T23:59:59`)
     }
     if (customerId) {
-      query = query.eq('customer_id', customerId)
+      invoiceQuery = invoiceQuery.eq('customer_id', customerId)
     }
 
-    const { data: invoices, error } = await query.order('created_at', {
+    const { data: invoices, error: invoicesError } = await invoiceQuery.order('created_at', {
       ascending: false,
     })
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (invoicesError) {
+      return NextResponse.json({ error: invoicesError.message }, { status: 500 })
     }
 
+    if (!invoices || invoices.length === 0) {
+      return NextResponse.json({ data: [] })
+    }
+
+    // Get invoice items for all invoices
+    const invoiceIds = invoices.map((inv) => inv.id)
+    const { data: invoiceItems, error: itemsError } = await supabase
+      .from(TABLES.INVOICE_ITEMS)
+      .select(
+        `
+        *,
+        item:${TABLES.ITEMS}(metal_type)
+      `
+      )
+      .in('invoice_id', invoiceIds)
+
+    if (itemsError) {
+      return NextResponse.json({ error: itemsError.message }, { status: 500 })
+    }
+
+    // Group invoice items by invoice_id
+    const itemsByInvoice = new Map<string, any[]>()
+    invoiceItems?.forEach((item: any) => {
+      const invoiceId = item.invoice_id
+      if (!itemsByInvoice.has(invoiceId)) {
+        itemsByInvoice.set(invoiceId, [])
+      }
+      itemsByInvoice.get(invoiceId)!.push(item)
+    })
+
     // Filter by metal type if specified
-    let filteredInvoices = invoices || []
-    if (metalType && invoices) {
+    let filteredInvoices = invoices
+    if (metalType) {
       filteredInvoices = invoices.filter((invoice) => {
-        if (!invoice.invoice_items || invoice.invoice_items.length === 0) {
-          return false
-        }
-        // Check if any item in the invoice matches the metal type
-        return invoice.invoice_items.some(
-          (item: any) => item.item?.metal_type === metalType
-        )
+        const items = itemsByInvoice.get(invoice.id) || []
+        return items.some((item: any) => item.item?.metal_type === metalType)
       })
     }
 
