@@ -564,7 +564,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
         </div>
       </div>
 
-      <div className="rounded-md border overflow-x-auto -mx-3 sm:mx-0">
+      <div className="rounded-md border bg-card overflow-x-auto -mx-3 sm:mx-0">
         <Table>
           <TableHeader>
             <TableRow>
@@ -621,7 +621,7 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
                 return (
                   <TableRow
                     key={item.id}
-                    className={`${isOutOfStock ? 'opacity-60' : isLowStock ? 'bg-orange-50/50' : ''} ${isSelected ? 'bg-muted' : ''}`}
+                    className={`${isOutOfStock ? 'bg-red-500/10 dark:bg-red-500/20 opacity-90' : isLowStock ? 'bg-orange-500/10 dark:bg-orange-500/20' : ''} ${isSelected ? 'bg-muted' : ''}`}
                   >
                     <TableCell>
                       <button
