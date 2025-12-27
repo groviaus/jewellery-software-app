@@ -37,7 +37,9 @@ async function fetchDailySalesReport(
   if (customerId) params.append('customer_id', customerId)
   if (metalType) params.append('metal_type', metalType)
 
-  const response = await fetch(`/api/reports/daily?${params.toString()}`)
+  const response = await fetch(`/api/reports/daily?${params.toString()}`, {
+    credentials: 'include', // Include cookies for authentication
+  })
   if (!response.ok) {
     throw new Error('Failed to fetch daily sales report')
   }
@@ -58,7 +60,9 @@ async function fetchSoldItemsReport(
   if (customerId) params.append('customer_id', customerId)
   if (metalType) params.append('metal_type', metalType)
 
-  const response = await fetch(`/api/reports/sold?${params.toString()}`)
+  const response = await fetch(`/api/reports/sold?${params.toString()}`, {
+    credentials: 'include', // Include cookies for authentication
+  })
   if (!response.ok) {
     throw new Error('Failed to fetch sold items report')
   }
@@ -68,7 +72,9 @@ async function fetchSoldItemsReport(
 
 // Fetch stock summary
 async function fetchStockSummary(): Promise<StockSummary> {
-  const response = await fetch('/api/reports/stock')
+  const response = await fetch('/api/reports/stock', {
+    credentials: 'include', // Include cookies for authentication
+  })
   if (!response.ok) {
     throw new Error('Failed to fetch stock summary')
   }
@@ -118,9 +124,13 @@ async function fetchProfitMarginReport(
   if (from) params.append('start_date', from)
   if (to) params.append('end_date', to)
 
-  const response = await fetch(`/api/reports/profit-margin?${params.toString()}`)
+  const response = await fetch(`/api/reports/profit-margin?${params.toString()}`, {
+    credentials: 'include', // Include cookies for authentication
+  })
   if (!response.ok) {
-    throw new Error('Failed to fetch profit margin report')
+    const errorData = await response.json().catch(() => ({}))
+    const errorMessage = errorData?.error || `Failed to fetch profit margin report (${response.status})`
+    throw new Error(errorMessage)
   }
   const data = await response.json()
   return data.data
@@ -137,7 +147,9 @@ async function fetchTopSellingItems(
   if (to) params.append('end_date', to)
   if (limit) params.append('limit', limit.toString())
 
-  const response = await fetch(`/api/reports/top-selling?${params.toString()}`)
+  const response = await fetch(`/api/reports/top-selling?${params.toString()}`, {
+    credentials: 'include', // Include cookies for authentication
+  })
   if (!response.ok) {
     throw new Error('Failed to fetch top selling items')
   }
@@ -151,7 +163,9 @@ async function fetchGSTReport(from?: string, to?: string): Promise<GSTReport> {
   if (from) params.append('start_date', from)
   if (to) params.append('end_date', to)
 
-  const response = await fetch(`/api/reports/gst?${params.toString()}`)
+  const response = await fetch(`/api/reports/gst?${params.toString()}`, {
+    credentials: 'include', // Include cookies for authentication
+  })
   if (!response.ok) {
     throw new Error('Failed to fetch GST report')
   }
@@ -164,6 +178,7 @@ export function useProfitMarginReport(from?: string, to?: string) {
   return useQuery({
     queryKey: reportKeys.profitMargin(from, to),
     queryFn: () => fetchProfitMarginReport(from, to),
+    enabled: !!(from && to), // Only fetch when both dates are provided
   })
 }
 

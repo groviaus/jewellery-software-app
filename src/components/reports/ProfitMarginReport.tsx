@@ -27,9 +27,9 @@ export default function ProfitMarginReport() {
   )
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'))
 
-  const { data: report, isLoading, refetch } = useProfitMarginReport(
-    startDate ? `${startDate}T00:00:00.000Z` : undefined,
-    endDate ? `${endDate}T23:59:59.999Z` : undefined
+  const { data: report, isLoading, error, refetch } = useProfitMarginReport(
+    startDate || undefined,
+    endDate || undefined
   )
 
   const fetchReport = () => {
@@ -175,22 +175,22 @@ export default function ProfitMarginReport() {
           <>
             <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total Revenue</p>
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
                 <p className="text-2xl font-bold">{formatCurrency(report.total_revenue)}</p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total Cost</p>
+                <p className="text-sm text-muted-foreground">Total Cost</p>
                 <p className="text-2xl font-bold">{formatCurrency(report.total_cost)}</p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total Profit</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm text-muted-foreground">Total Profit</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {formatCurrency(report.total_profit)}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Profit Margin</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm text-muted-foreground">Profit Margin</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {report.profit_margin.toFixed(2)}%
                 </p>
               </div>
@@ -231,8 +231,28 @@ export default function ProfitMarginReport() {
               </div>
             )}
           </>
+        ) : error ? (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+            <p className="text-destructive font-medium">Error loading report</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : 'An unexpected error occurred'}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="mt-3"
+            >
+              Try Again
+            </Button>
+          </div>
         ) : !isLoading ? (
-          <p className="text-center text-gray-500">No data found for the selected period</p>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No data found for the selected period</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Try adjusting the date range
+            </p>
+          </div>
         ) : null}
       </CardContent>
     </Card>
