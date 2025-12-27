@@ -35,6 +35,7 @@ export async function GET() {
       total_silver_items: items?.filter((item) => item.metal_type === 'Silver').length || 0,
       total_diamond_items: items?.filter((item) => item.metal_type === 'Diamond').length || 0,
       low_stock_items: items?.filter((item) => item.quantity <= stockAlertThreshold && item.quantity > 0).length || 0,
+      out_of_stock_items: items?.filter((item) => item.quantity === 0).length || 0,
     }
 
     return NextResponse.json({ data: summary })

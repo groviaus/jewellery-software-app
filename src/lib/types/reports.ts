@@ -14,6 +14,7 @@ export interface StockSummary {
   total_silver_items: number
   total_diamond_items: number
   low_stock_items: number
+  out_of_stock_items: number
 }
 
 export interface SoldItem {

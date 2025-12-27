@@ -167,7 +167,9 @@ async function fetchGSTReport(from?: string, to?: string): Promise<GSTReport> {
     credentials: 'include', // Include cookies for authentication
   })
   if (!response.ok) {
-    throw new Error('Failed to fetch GST report')
+    const errorData = await response.json().catch(() => ({}))
+    const errorMessage = errorData?.error || `Failed to fetch GST report (${response.status})`
+    throw new Error(errorMessage)
   }
   const data = await response.json()
   return data.data
@@ -193,6 +195,7 @@ export function useGSTReport(from?: string, to?: string) {
   return useQuery({
     queryKey: reportKeys.gst(from, to),
     queryFn: () => fetchGSTReport(from, to),
+    enabled: !!(from && to), // Only fetch when both dates are provided
   })
 }
 

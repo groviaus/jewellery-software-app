@@ -27,9 +27,9 @@ export default function GSTReport() {
   )
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   
-  const { data: report, isLoading, refetch } = useGSTReport(
-    startDate ? `${startDate}T00:00:00.000Z` : undefined,
-    endDate ? `${endDate}T23:59:59.999Z` : undefined
+  const { data: report, isLoading, error, refetch } = useGSTReport(
+    startDate || undefined,
+    endDate || undefined
   )
 
   const fetchReport = () => {
@@ -168,23 +168,23 @@ export default function GSTReport() {
           <>
             <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total Sales</p>
+                <p className="text-sm text-muted-foreground">Total Sales</p>
                 <p className="text-2xl font-bold">{formatCurrency(report.summary.total_sales)}</p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total GST</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-sm text-muted-foreground">Total GST</p>
+                <p className="text-2xl font-bold text-red-600 dark:text-red-400">
                   {formatCurrency(report.summary.total_gst)}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Taxable Amount</p>
+                <p className="text-sm text-muted-foreground">Taxable Amount</p>
                 <p className="text-2xl font-bold">
                   {formatCurrency(report.summary.total_taxable_amount)}
                 </p>
               </div>
               <div className="rounded-lg border p-4">
-                <p className="text-sm text-gray-600">Total Invoices</p>
+                <p className="text-sm text-muted-foreground">Total Invoices</p>
                 <p className="text-2xl font-bold">{report.summary.total_invoices}</p>
               </div>
             </div>
@@ -213,7 +213,7 @@ export default function GSTReport() {
                         <TableCell className="text-right">
                           {formatCurrency(month.taxable_amount)}
                         </TableCell>
-                        <TableCell className="text-right text-red-600">
+                        <TableCell className="text-right text-red-600 dark:text-red-400">
                           {formatCurrency(month.total_gst)}
                         </TableCell>
                         <TableCell className="text-right">{month.invoice_count}</TableCell>
@@ -224,8 +224,28 @@ export default function GSTReport() {
               </div>
             )}
           </>
+        ) : error ? (
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-center">
+            <p className="text-destructive font-medium">Error loading report</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {error instanceof Error ? error.message : 'An unexpected error occurred'}
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => refetch()}
+              className="mt-3"
+            >
+              Try Again
+            </Button>
+          </div>
         ) : !isLoading ? (
-          <p className="text-center text-gray-500">No data found for the selected period</p>
+          <div className="text-center py-8">
+            <p className="text-muted-foreground">No data found for the selected period</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Try adjusting the date range
+            </p>
+          </div>
         ) : null}
       </CardContent>
     </Card>
