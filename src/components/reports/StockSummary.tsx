@@ -98,13 +98,15 @@ export default function StockSummary() {
 
   // Calculate percentages for metal type distribution
   const totalMetalItems =
-    summary?.total_gold_items + summary?.total_silver_items + summary?.total_diamond_items || 0
+    (summary?.total_gold_items ?? 0) + 
+    (summary?.total_silver_items ?? 0) + 
+    (summary?.total_diamond_items ?? 0)
   const goldPercentage =
-    totalMetalItems > 0 ? Math.round((summary?.total_gold_items / totalMetalItems) * 100) : 0
+    totalMetalItems > 0 ? Math.round(((summary?.total_gold_items ?? 0) / totalMetalItems) * 100) : 0
   const silverPercentage =
-    totalMetalItems > 0 ? Math.round((summary?.total_silver_items / totalMetalItems) * 100) : 0
+    totalMetalItems > 0 ? Math.round(((summary?.total_silver_items ?? 0) / totalMetalItems) * 100) : 0
   const diamondPercentage =
-    totalMetalItems > 0 ? Math.round((summary?.total_diamond_items / totalMetalItems) * 100) : 0
+    totalMetalItems > 0 ? Math.round(((summary?.total_diamond_items ?? 0) / totalMetalItems) * 100) : 0
 
   if (isLoading) {
     return (

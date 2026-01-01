@@ -23,12 +23,18 @@ export function useNetworkStatus() {
       // Native: use Capacitor Network plugin
       Network.getStatus().then(status => setIsOnline(status.connected));
       
-      const listener = Network.addListener('networkStatusChange', status => {
+      let listenerHandle: Awaited<ReturnType<typeof Network.addListener>> | null = null;
+      
+      Network.addListener('networkStatusChange', status => {
         setIsOnline(status.connected);
+      }).then(handle => {
+        listenerHandle = handle;
       });
       
       return () => {
-        listener.remove();
+        if (listenerHandle) {
+          listenerHandle.remove();
+        }
       };
     }
   }, []);
