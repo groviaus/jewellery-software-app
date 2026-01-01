@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { setAuthToken } from '@/lib/capacitor/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -61,10 +62,9 @@ export default function LoginForm() {
         localStorage.removeItem('remembered_email')
       }
 
-      // Set token in a simple cookie for server-side access
-      // This is much simpler than Supabase's complex cookie chunking
+      // Set token using Capacitor auth helper (handles WebView cookies properly)
       const maxAge = rememberMe ? 86400 * 7 : 3600 // 7 days if remember me, 1 hour otherwise
-      document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${maxAge}; SameSite=Lax`
+      await setAuthToken(session.access_token, maxAge)
 
       toast.success('Login successful', 'Welcome back!')
       
