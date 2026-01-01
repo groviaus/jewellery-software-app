@@ -18,8 +18,8 @@
     "cap:dev": "CAPACITOR_SERVER_URL=http://localhost:3000 pnpm dev",
     "cap:dev:android": "CAPACITOR_SERVER_URL=http://10.0.2.2:3000 pnpm cap:build:android",
     "cap:dev:ios": "CAPACITOR_SERVER_URL=http://localhost:3000 pnpm cap:build:ios",
-    "cap:prod:android": "CAPACITOR_SERVER_URL=https://your-app.vercel.app pnpm cap:build:android",
-    "cap:prod:ios": "CAPACITOR_SERVER_URL=https://your-app.vercel.app pnpm cap:build:ios"
+    "cap:prod:android": "CAPACITOR_SERVER_URL=https://jewellery-software-app.vercel.app pnpm cap:build:android",
+    "cap:prod:ios": "CAPACITOR_SERVER_URL=https://jewellery-software-app.vercel.app pnpm cap:build:ios"
   },
   "dependencies": {
     "@capacitor/app": "^8.0.0",

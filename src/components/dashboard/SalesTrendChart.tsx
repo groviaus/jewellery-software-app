@@ -38,11 +38,11 @@ export default function SalesTrendChart({ initialInvoices }: SalesTrendChartProp
   if (isLoading && (!initialInvoices || initialInvoices.length === 0)) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Sales Trend (Last 30 Days)</CardTitle>
+        <CardHeader className="pb-3 sm:pb-6">
+          <CardTitle className="text-base sm:text-lg md:text-xl">Sales Trend (Last 30 Days)</CardTitle>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-[250px] sm:h-[300px] md:h-[350px] w-full" />
         </CardContent>
       </Card>
     )
@@ -50,14 +50,14 @@ export default function SalesTrendChart({ initialInvoices }: SalesTrendChartProp
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Sales Trend (Last 30 Days)</CardTitle>
+      <CardHeader className="pb-3 sm:pb-6">
+        <CardTitle className="text-base sm:text-lg md:text-xl">Sales Trend (Last 30 Days)</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 pb-0 sm:px-3 md:px-6">
         {chartData.length > 0 ? (
           <SalesChart data={chartData} period="daily" />
         ) : (
-          <p className="text-center text-gray-500 py-20">No sales data available</p>
+          <p className="text-center text-gray-500 py-12 sm:py-20 text-sm sm:text-base">No sales data available</p>
         )}
       </CardContent>
     </Card>

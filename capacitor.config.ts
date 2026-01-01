@@ -6,8 +6,11 @@ const config: CapacitorConfig = {
   webDir: '.next', // Points to Next.js build output
   server: {
     // Production: Load from Vercel
-    url: process.env.CAPACITOR_SERVER_URL || 'https://your-app.vercel.app',
-    cleartext: false, // Set to true only for local HTTP development
+    // For local dev, set CAPACITOR_SERVER_URL=http://10.0.2.2:3000
+    url: process.env.CAPACITOR_SERVER_URL || 'https://jewellery-software-app.vercel.app',
+    // Allow cleartext (HTTP) for local development
+    // Production builds will use HTTPS from Vercel
+    cleartext: process.env.CAPACITOR_SERVER_URL?.startsWith('http://') ?? false,
   },
   android: {
     buildOptions: {
