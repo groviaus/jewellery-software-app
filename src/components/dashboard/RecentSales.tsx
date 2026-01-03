@@ -12,12 +12,13 @@ import {
 import { formatCurrency } from '@/lib/utils/calculations'
 import { format } from 'date-fns'
 import Link from 'next/link'
-import { useRecentInvoices } from '@/lib/hooks/useInvoices'
+import { useRecentInvoices, usePeriodInvoices } from '@/lib/hooks/useInvoices'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useMemo } from 'react'
 import type { Invoice } from '@/lib/types/billing'
 
 interface RecentSalesProps {
-  invoices?: Array<{
+  initialInvoices?: Array<{
     id: string
     invoice_number: string
     total_amount: number
@@ -26,29 +27,40 @@ interface RecentSalesProps {
       name: string
     } | null
   }>
+  startDate?: string
+  endDate?: string
 }
 
-export default function RecentSales({ invoices: initialInvoices }: RecentSalesProps) {
-  // Use React Query hook - now the endpoint exists and will fetch/update automatically
-  const { data: queryInvoices, isLoading } = useRecentInvoices(10, {
+export default function RecentSales({ initialInvoices, startDate, endDate }: RecentSalesProps) {
+  const hasDateRange = !!(startDate || endDate)
+
+  // Use period invoices if range is provided, fallback to recent 10 invoices
+  const { data: periodInvoices, isLoading: isPeriodLoading } = usePeriodInvoices(startDate, endDate)
+  const { data: recentInvoices, isLoading: isRecentLoading } = useRecentInvoices(10, {
     initialData: (initialInvoices || []) as Invoice[]
   })
 
-  // Use query data if available (will auto-update), otherwise use server data
-  const displayInvoices = queryInvoices || initialInvoices || []
+  // Determine which data and loading state to use
+  const isLoading = hasDateRange ? isPeriodLoading : isRecentLoading
+  const displayInvoices = hasDateRange ? periodInvoices : recentInvoices || initialInvoices || []
 
   // Normalize customer data - Supabase returns customer as array for foreign key relationships
-  const normalizedInvoices = displayInvoices.map((invoice: any) => ({
-    ...invoice,
-    customer: Array.isArray(invoice.customer)
-      ? invoice.customer[0] || null
-      : invoice.customer || null
-  }))
+  const normalizedInvoices = useMemo(() => {
+    if (!displayInvoices) return []
+    return displayInvoices.map((invoice: any) => ({
+      ...invoice,
+      customer: Array.isArray(invoice.customer)
+        ? invoice.customer[0] || null
+        : invoice.customer || null
+    }))
+  }, [displayInvoices])
+
+  const title = hasDateRange ? 'Sales for Selected Period' : 'Recent Sales'
 
   return (
     <Card className="h-auto lg:h-[330px] flex flex-col">
       <CardHeader className="pb-3 sm:pb-6">
-        <CardTitle className="text-lg sm:text-xl">Recent Sales</CardTitle>
+        <CardTitle className="text-lg sm:text-xl">{title}</CardTitle>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {isLoading && (!initialInvoices || initialInvoices.length === 0) ? (
@@ -71,7 +83,7 @@ export default function RecentSales({ invoices: initialInvoices }: RecentSalesPr
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {normalizedInvoices.map((invoice) => (
+                {normalizedInvoices.map((invoice: any) => (
                   <TableRow key={invoice.id}>
                     <TableCell className="font-medium text-xs sm:text-sm whitespace-nowrap">
                       <Link

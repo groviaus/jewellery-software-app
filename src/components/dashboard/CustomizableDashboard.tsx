@@ -137,11 +137,30 @@ export default function CustomizableDashboard({
   const renderWidget = (widget: DashboardWidget) => {
     switch (widget.id) {
       case 'stats':
-        return <StatsCards todaySales={todaySales} totalStock={totalStock} />
+        return (
+          <StatsCards
+            todaySales={todaySales}
+            totalStock={totalStock}
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+          />
+        )
       case 'sales-trend':
-        return <SalesTrendChart initialInvoices={recentInvoices || []} />
+        return (
+          <SalesTrendChart
+            initialInvoices={recentInvoices || []}
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+          />
+        )
       case 'recent-sales':
-        return <RecentSales invoices={recentInvoices || []} />
+        return (
+          <RecentSales
+            initialInvoices={recentInvoices || []}
+            startDate={dateRange.startDate}
+            endDate={dateRange.endDate}
+          />
+        )
       case 'revenue-comparison':
         return <RevenueComparison />
       case 'quick-actions':

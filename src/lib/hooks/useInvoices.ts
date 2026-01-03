@@ -10,6 +10,7 @@ export const invoiceKeys = {
   detail: (id: string) => [...invoiceKeys.details(), id] as const,
   recent: () => [...invoiceKeys.lists(), 'recent'] as const,
   today: () => [...invoiceKeys.lists(), 'today'] as const,
+  period: (start?: string, end?: string) => [...invoiceKeys.lists(), 'period', { start, end }] as const,
 }
 
 // Fetch all invoices
@@ -32,6 +33,43 @@ async function fetchInvoice(id: string): Promise<Invoice> {
   return data.data
 }
 
+// Fetch invoices for a period
+async function fetchInvoicesByPeriod(startDate?: string, endDate?: string): Promise<Invoice[]> {
+  let url = '/api/billing/invoice'
+  const params = new URLSearchParams()
+  if (startDate) {
+    if (startDate.length === 10) {
+      const start = new Date(startDate)
+      start.setHours(0, 0, 0, 0)
+      params.append('from', start.toISOString())
+    } else {
+      params.append('from', startDate)
+    }
+  }
+  if (endDate) {
+    // If endDate is just a date (YYYY-MM-DD), make it end of day
+    if (endDate.length === 10) {
+      const end = new Date(endDate)
+      end.setHours(23, 59, 59, 999)
+      params.append('to', end.toISOString())
+    } else {
+      params.append('to', endDate)
+    }
+  }
+
+  const queryString = params.toString()
+  if (queryString) {
+    url += `?${queryString}`
+  }
+
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error('Failed to fetch invoices for period')
+  }
+  const data = await response.json()
+  return data.data || []
+}
+
 // Fetch today's invoices
 async function fetchTodayInvoices(): Promise<Invoice[]> {
   const today = new Date()
@@ -39,14 +77,7 @@ async function fetchTodayInvoices(): Promise<Invoice[]> {
   const tomorrow = new Date(today)
   tomorrow.setDate(tomorrow.getDate() + 1)
 
-  const response = await fetch(
-    `/api/billing/invoice?from=${today.toISOString()}&to=${tomorrow.toISOString()}`
-  )
-  if (!response.ok) {
-    throw new Error('Failed to fetch today\'s invoices')
-  }
-  const data = await response.json()
-  return data.data || []
+  return fetchInvoicesByPeriod(today.toISOString(), tomorrow.toISOString())
 }
 
 // Fetch recent invoices
@@ -99,6 +130,15 @@ export function useTodayInvoices(options?: { initialData?: Invoice[] }) {
     queryKey: invoiceKeys.today(),
     queryFn: fetchTodayInvoices,
     initialData: options?.initialData,
+  })
+}
+
+export function usePeriodInvoices(startDate?: string, endDate?: string, options?: { initialData?: Invoice[] }) {
+  return useQuery({
+    queryKey: invoiceKeys.period(startDate, endDate),
+    queryFn: () => fetchInvoicesByPeriod(startDate, endDate),
+    initialData: options?.initialData,
+    enabled: !!startDate || !!endDate,
   })
 }
 
