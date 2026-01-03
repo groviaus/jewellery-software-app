@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { X, Copy, GripVertical, Printer, Save, PieChart } from 'lucide-react'
+import { X, Copy, GripVertical, Printer, Save, PieChart, Tag, Percent } from 'lucide-react'
 import RevenueChart from '@/components/charts/RevenueChart'
 import { toast } from '@/lib/utils/toast'
 import type { CartItem } from '@/lib/types/billing'
@@ -43,22 +43,31 @@ import {
 interface InvoicePreviewProps {
   cart: CartItem[]
   goldRate: number
+  silverRate?: number
+  diamondRate?: number
   gstRate: number
   onRemoveItem: (itemId: string) => void
   onUpdateItem: (itemId: string, updates: Partial<CartItem>) => void
   onReorderItems?: (items: CartItem[]) => void
   onDuplicateItem?: (item: CartItem) => void
+  discountType?: 'percentage' | 'fixed'
+  discountValue?: number
+  onDiscountChange?: (type: 'percentage' | 'fixed', value: number) => void
 }
 
 function SortableCartRow({
   item,
   goldRate,
+  silverRate,
+  diamondRate,
   onUpdateItem,
   onRemoveItem,
   onDuplicateItem,
 }: {
   item: CartItem
   goldRate: number
+  silverRate: number
+  diamondRate: number
   onUpdateItem: (itemId: string, updates: Partial<CartItem>) => void
   onRemoveItem: (itemId: string) => void
   onDuplicateItem?: (item: CartItem) => void
@@ -78,21 +87,61 @@ function SortableCartRow({
     opacity: isDragging ? 0.5 : 1,
   }
 
+  // Calculate breakdown for this item
+  let rate = 0
+  if (item.item.metal_type === 'Gold') {
+    rate = goldRate
+  } else if (item.item.metal_type === 'Silver') {
+    rate = silverRate
+  } else if (item.item.metal_type === 'Diamond') {
+    rate = diamondRate
+  }
+
+  const metalValue = calculateGoldValue(item.weight, rate)
+  const makingCharges = calculateMakingCharges(
+    item.weight,
+    item.item.making_charge,
+    item.item.making_charge_type || 'percentage',
+    metalValue
+  )
+  const itemSubtotal = metalValue + makingCharges
+
   return (
-    <TableRow ref={setNodeRef} style={style}>
-      <TableCell>
-        <div className="flex items-center gap-2">
+    <TableRow ref={setNodeRef} style={style} className="text-xs sm:text-sm">
+      <TableCell className="px-2 py-3 align-top">
+        <div className="flex items-start gap-2">
           <button
             {...attributes}
             {...listeners}
-            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+            className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground p-1 mt-1"
           >
             <GripVertical className="h-4 w-4" />
           </button>
-          <span className="font-medium">{item.item.name}</span>
+          <div className="flex-1 min-w-0">
+            <div className="font-medium mb-1">{item.item.name}</div>
+            <div className="text-[10px] text-muted-foreground mb-2">
+              {item.item.metal_type} • {item.item.purity}
+            </div>
+            <div className="space-y-1 text-[11px]">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">{item.item.metal_type} Value:</span>
+                <span className="font-medium">{formatCurrency(metalValue)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">
+                  Making {item.item.making_charge_type === 'percentage' ? `(${item.item.making_charge}%)` : `(₹${item.item.making_charge}/g)`}:
+                </span>
+                <span className="font-medium">{formatCurrency(makingCharges)}</span>
+              </div>
+              <div className="flex justify-between pt-1 border-t">
+                <span className="text-muted-foreground">Subtotal:</span>
+                <span className="font-semibold">{formatCurrency(itemSubtotal)}</span>
+              </div>
+            </div>
+          </div>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="px-2 py-3 align-top">
         <Input
           type="number"
           step="0.001"
@@ -102,10 +151,11 @@ function SortableCartRow({
               weight: parseFloat(e.target.value) || 0,
             })
           }
-          className="w-20"
+          className="w-20 h-9"
         />
+        <div className="text-[10px] text-muted-foreground mt-1">grams</div>
       </TableCell>
-      <TableCell>
+      <TableCell className="px-2 py-3 align-top">
         <Input
           type="number"
           value={item.quantity}
@@ -114,21 +164,34 @@ function SortableCartRow({
               quantity: parseInt(e.target.value) || 1,
             })
           }
-          className="w-16"
+          className="w-16 h-9"
           min="1"
         />
+        {item.quantity > 1 && (
+          <div className="text-[10px] text-muted-foreground mt-1">
+            × {item.quantity}
+          </div>
+        )}
       </TableCell>
-      <TableCell className="text-right">
-        {formatCurrency(item.subtotal * item.quantity)}
+      <TableCell className="text-right px-2 py-3 align-top">
+        <div className="font-bold text-base">
+          {formatCurrency(itemSubtotal * item.quantity)}
+        </div>
+        {item.quantity > 1 && (
+          <div className="text-[10px] text-muted-foreground mt-1">
+            {formatCurrency(itemSubtotal)} each
+          </div>
+        )}
       </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1">
+      <TableCell className="px-2 py-3 align-top">
+        <div className="flex flex-col gap-1">
           {onDuplicateItem && (
             <Button
               variant="ghost"
               size="sm"
               onClick={() => onDuplicateItem(item)}
               title="Duplicate item"
+              className="h-8 w-8 p-0"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -138,6 +201,7 @@ function SortableCartRow({
             size="sm"
             onClick={() => onRemoveItem(item.item_id)}
             title="Remove item"
+            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
           >
             <X className="h-4 w-4" />
           </Button>
@@ -150,15 +214,23 @@ function SortableCartRow({
 export default function InvoicePreview({
   cart,
   goldRate,
+  silverRate = 0,
+  diamondRate = 0,
   gstRate,
   onRemoveItem,
   onUpdateItem,
   onReorderItems,
   onDuplicateItem,
+  discountType = 'percentage',
+  discountValue = 0,
+  onDiscountChange,
 }: InvoicePreviewProps) {
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set())
   const [showBreakdown, setShowBreakdown] = useState(false)
   const [isPrintMode, setIsPrintMode] = useState(false)
+  const [showDiscount, setShowDiscount] = useState(false)
+  const [localDiscountType, setLocalDiscountType] = useState<'percentage' | 'fixed'>(discountType)
+  const [localDiscountValue, setLocalDiscountValue] = useState(discountValue)
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -170,40 +242,76 @@ export default function InvoicePreview({
     let totalMakingCharges = 0
 
     cart.forEach((item) => {
-      const goldValue = calculateGoldValue(item.weight, goldRate)
+      // Get the appropriate rate based on metal type
+      let rate = 0
+      if (item.item.metal_type === 'Gold') {
+        rate = goldRate
+      } else if (item.item.metal_type === 'Silver') {
+        rate = silverRate
+      } else if (item.item.metal_type === 'Diamond') {
+        rate = diamondRate
+      }
+
+      const goldValue = calculateGoldValue(item.weight, rate)
       const makingCharges = calculateMakingCharges(
         item.weight,
-        item.item.making_charge
+        item.item.making_charge,
+        item.item.making_charge_type || 'percentage',
+        goldValue
       )
 
       totalGoldValue += goldValue * item.quantity
       totalMakingCharges += makingCharges * item.quantity
     })
 
-    const gstAmount = calculateGST(totalGoldValue, totalMakingCharges, gstRate)
-    const grandTotal = calculateGrandTotal(
-      totalGoldValue,
-      totalMakingCharges,
-      gstAmount
-    )
+    const subtotal = totalGoldValue + totalMakingCharges
+
+    // Calculate discount
+    let discountAmount = 0
+    if (localDiscountValue > 0) {
+      if (localDiscountType === 'percentage') {
+        discountAmount = (subtotal * localDiscountValue) / 100
+      } else {
+        discountAmount = localDiscountValue
+      }
+    }
+
+    const afterDiscount = subtotal - discountAmount
+    const gstAmount = calculateGST(afterDiscount, 0, gstRate)
+    const grandTotal = afterDiscount + gstAmount
 
     return {
       goldValue: totalGoldValue,
       makingCharges: totalMakingCharges,
+      subtotal,
+      discountAmount,
+      afterDiscount,
       gstAmount,
       grandTotal,
     }
-  }, [cart, goldRate, gstRate])
+  }, [cart, goldRate, silverRate, diamondRate, gstRate, localDiscountType, localDiscountValue])
 
   // Update item calculations when totals change
   useEffect(() => {
     if (cart.length === 0) return
 
     cart.forEach((item) => {
-      const goldValue = calculateGoldValue(item.weight, goldRate)
+      // Get the appropriate rate based on metal type
+      let rate = 0
+      if (item.item.metal_type === 'Gold') {
+        rate = goldRate
+      } else if (item.item.metal_type === 'Silver') {
+        rate = silverRate
+      } else if (item.item.metal_type === 'Diamond') {
+        rate = diamondRate
+      }
+
+      const goldValue = calculateGoldValue(item.weight, rate)
       const makingCharges = calculateMakingCharges(
         item.weight,
-        item.item.making_charge
+        item.item.making_charge,
+        item.item.making_charge_type || 'percentage',
+        goldValue
       )
       const newGoldValue = goldValue
       const newMakingCharges = makingCharges
@@ -223,7 +331,7 @@ export default function InvoicePreview({
       }
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cart, goldRate])
+  }, [cart, goldRate, silverRate, diamondRate])
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event
@@ -286,25 +394,27 @@ export default function InvoicePreview({
 
   return (
     <div className={`space-y-4 ${isPrintMode ? 'print-mode' : ''}`}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowBreakdown(!showBreakdown)}
-          >
-            <PieChart className="mr-2 h-4 w-4" />
-            {showBreakdown ? 'Hide' : 'Show'} Breakdown
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleSaveDraft}>
-            <Save className="mr-2 h-4 w-4" />
-            Save Draft
-          </Button>
-          <Button variant="outline" size="sm" onClick={handlePrint}>
-            <Printer className="mr-2 h-4 w-4" />
-            Print
-          </Button>
-        </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowBreakdown(!showBreakdown)}
+          className="flex-1 sm:flex-none"
+        >
+          <PieChart className="mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">{showBreakdown ? 'Hide' : 'Show'} Breakdown</span>
+          <span className="sm:hidden">Breakdown</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={handleSaveDraft} className="flex-1 sm:flex-none">
+          <Save className="mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">Save Draft</span>
+          <span className="sm:hidden">Save</span>
+        </Button>
+        <Button variant="outline" size="sm" onClick={handlePrint} className="flex-1 sm:flex-none">
+          <Printer className="mr-2 h-4 w-4" />
+          <span className="hidden sm:inline">Print</span>
+          <span className="sm:hidden">Print</span>
+        </Button>
       </div>
 
       {showBreakdown && (
@@ -347,16 +457,16 @@ export default function InvoicePreview({
         collisionDetection={closestCenter}
         onDragEnd={handleDragEnd}
       >
-        <div className="max-h-64 overflow-y-auto rounded-md border">
+        <div className="max-h-64 overflow-y-auto overflow-x-auto rounded-md border scrollbar-hide">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[30px]"></TableHead>
-                <TableHead>Item</TableHead>
-                <TableHead>Weight</TableHead>
-                <TableHead>Qty</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="w-[100px]"></TableHead>
+            <TableHeader className="bg-muted/50">
+              <TableRow className="text-xs uppercase tracking-wider">
+                <TableHead className="w-[30px] px-2 h-10"></TableHead>
+                <TableHead className="px-2 h-10">Item</TableHead>
+                <TableHead className="px-2 h-10">Weight</TableHead>
+                <TableHead className="px-2 h-10">Qty</TableHead>
+                <TableHead className="text-right px-2 h-10">Amount</TableHead>
+                <TableHead className="w-[80px] px-2 h-10"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -369,6 +479,8 @@ export default function InvoicePreview({
                     key={item.item_id}
                     item={item}
                     goldRate={goldRate}
+                    silverRate={silverRate}
+                    diamondRate={diamondRate}
                     onUpdateItem={onUpdateItem}
                     onRemoveItem={onRemoveItem}
                     onDuplicateItem={onDuplicateItem}
@@ -380,6 +492,76 @@ export default function InvoicePreview({
         </div>
       </DndContext>
 
+      {/* Discount Section */}
+      <div className="border-t pt-4">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowDiscount(!showDiscount)}
+          className="w-full sm:w-auto"
+        >
+          <Tag className="mr-2 h-4 w-4" />
+          {showDiscount ? 'Hide' : 'Add'} Discount
+        </Button>
+
+        {showDiscount && (
+          <div className="mt-3 space-y-3 rounded-lg border p-3 bg-muted/30">
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant={localDiscountType === 'percentage' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setLocalDiscountType('percentage')
+                  onDiscountChange?.('percentage', localDiscountValue)
+                }}
+                className="flex-1 sm:flex-none"
+              >
+                <Percent className="mr-2 h-3.5 w-3.5" />
+                Percentage
+              </Button>
+              <Button
+                variant={localDiscountType === 'fixed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setLocalDiscountType('fixed')
+                  onDiscountChange?.('fixed', localDiscountValue)
+                }}
+                className="flex-1 sm:flex-none"
+              >
+                <Tag className="mr-2 h-3.5 w-3.5" />
+                Fixed Amount
+              </Button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                min="0"
+                step={localDiscountType === 'percentage' ? '0.1' : '1'}
+                max={localDiscountType === 'percentage' ? '100' : undefined}
+                value={localDiscountValue}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value) || 0
+                  setLocalDiscountValue(value)
+                  onDiscountChange?.(localDiscountType, value)
+                }}
+                placeholder={localDiscountType === 'percentage' ? 'Enter %' : 'Enter amount'}
+                className="flex-1"
+              />
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {localDiscountType === 'percentage' ? '%' : '₹'}
+              </span>
+            </div>
+
+            {totals.discountAmount > 0 && (
+              <div className="text-sm text-green-600 dark:text-green-400">
+                Discount: {formatCurrency(totals.discountAmount)}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       <div className="space-y-2 border-t pt-4">
         <div className="flex justify-between text-sm">
           <span>Gold Value:</span>
@@ -389,6 +571,20 @@ export default function InvoicePreview({
           <span>Making Charges:</span>
           <span>{formatCurrency(totals.makingCharges)}</span>
         </div>
+        <div className="flex justify-between text-sm font-medium">
+          <span>Subtotal:</span>
+          <span>{formatCurrency(totals.subtotal)}</span>
+        </div>
+
+        {totals.discountAmount > 0 && (
+          <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+            <span>
+              Discount {localDiscountType === 'percentage' ? `(${localDiscountValue}%)` : ''}:
+            </span>
+            <span>- {formatCurrency(totals.discountAmount)}</span>
+          </div>
+        )}
+
         <div className="flex justify-between text-sm">
           <span>GST ({gstRate}%):</span>
           <span>{formatCurrency(totals.gstAmount)}</span>

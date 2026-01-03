@@ -57,46 +57,49 @@ export default function InvoiceView({ invoice, settings }: InvoiceViewProps) {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="mb-4 flex justify-end gap-2 print:hidden">
-        <Link href="/billing">
-          <Button variant="outline">
+    <div className="mx-auto max-w-4xl px-2 sm:px-4">
+      <div className="mb-4 flex flex-wrap gap-2 print:hidden">
+        <Link href="/billing" className="flex-1 sm:flex-none">
+          <Button variant="outline" className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
-            Create Another
+            <span className="hidden sm:inline">Create Another</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </Link>
-        <Button variant="outline" onClick={handlePrint}>
+        <Button variant="outline" onClick={handlePrint} className="flex-1 sm:flex-none">
           <Printer className="mr-2 h-4 w-4" />
-          Print
+          <span className="hidden sm:inline">Print</span>
+          <span className="sm:hidden">Print</span>
         </Button>
-        <Button variant="outline" onClick={handleDownloadPDF}>
+        <Button variant="outline" onClick={handleDownloadPDF} className="flex-1 sm:flex-none">
           <Download className="mr-2 h-4 w-4" />
-          Download PDF
+          <span className="hidden sm:inline">Download PDF</span>
+          <span className="sm:hidden">PDF</span>
         </Button>
       </div>
 
       <Card className="print:border-none print:shadow-none">
-        <CardContent className="p-8">
+        <CardContent className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="mb-8 border-b pb-4">
-            <div className="flex justify-between">
+          <div className="mb-6 sm:mb-8 border-b pb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
               <div>
-                <h1 className="text-2xl font-bold">
+                <h1 className="text-xl sm:text-2xl font-bold break-words">
                   {settings?.store_name || 'Jewellery Store'}
                 </h1>
                 {settings?.address && (
-                  <p className="mt-1 text-sm text-muted-foreground">{settings.address}</p>
+                  <p className="mt-1 text-xs sm:text-sm text-muted-foreground break-words">{settings.address}</p>
                 )}
                 {settings?.gst_number && (
-                  <p className="text-sm text-muted-foreground">GST: {settings.gst_number}</p>
+                  <p className="text-xs sm:text-sm text-muted-foreground break-words">GST: {settings.gst_number}</p>
                 )}
               </div>
-              <div className="text-right">
-                <h2 className="text-xl font-bold">INVOICE</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
+              <div className="sm:text-right">
+                <h2 className="text-lg sm:text-xl font-bold">INVOICE</h2>
+                <p className="mt-1 text-xs sm:text-sm text-muted-foreground break-words">
                   {invoice.invoice_number}
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   Date: {format(new Date(invoice.created_at), 'MMM dd, yyyy')}
                 </p>
               </div>
@@ -106,70 +109,107 @@ export default function InvoiceView({ invoice, settings }: InvoiceViewProps) {
           {/* Customer Info */}
           {invoice.customer && (
             <div className="mb-6">
-              <h3 className="mb-2 font-semibold">Bill To:</h3>
-              <p>{invoice.customer.name}</p>
-              <p className="text-sm text-muted-foreground">{invoice.customer.phone}</p>
+              <h3 className="mb-2 text-sm sm:text-base font-semibold">Bill To:</h3>
+              <p className="text-sm sm:text-base break-words">{invoice.customer.name}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground break-words">{invoice.customer.phone}</p>
             </div>
           )}
 
           {/* Items Table */}
-          <div className="mb-6">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b">
-                  <th className="p-2 text-left">Item</th>
-                  <th className="p-2 text-left">SKU</th>
-                  <th className="p-2 text-right">Weight (g)</th>
-                  <th className="p-2 text-right">Qty</th>
-                  <th className="p-2 text-right">Price</th>
-                  <th className="p-2 text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoice.items.map((item) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="p-2">{item.item?.name || 'N/A'}</td>
-                    <td className="p-2 text-sm text-muted-foreground">
-                      {item.item?.sku || 'N/A'}
-                    </td>
-                    <td className="p-2 text-right">{item.weight}</td>
-                    <td className="p-2 text-right">{item.quantity}</td>
-                    <td className="p-2 text-right">
-                      {formatCurrency(item.price)}
-                    </td>
-                    <td className="p-2 text-right">
-                      {formatCurrency(item.price * item.quantity)}
-                    </td>
+          <div className="mb-6 overflow-x-auto -mx-4 sm:mx-0">
+            <div className="inline-block min-w-full align-middle px-4 sm:px-0">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="p-2 text-left text-xs sm:text-sm font-medium">Item</th>
+                    <th className="p-2 text-left text-xs sm:text-sm font-medium hidden sm:table-cell">SKU</th>
+                    <th className="p-2 text-right text-xs sm:text-sm font-medium">Weight</th>
+                    <th className="p-2 text-right text-xs sm:text-sm font-medium">Qty</th>
+                    <th className="p-2 text-right text-xs sm:text-sm font-medium hidden md:table-cell">Price</th>
+                    <th className="p-2 text-right text-xs sm:text-sm font-medium">Total</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {invoice.items.map((item) => (
+                    <tr key={item.id} className="border-b">
+                      <td className="p-2 text-xs sm:text-sm">
+                        <div className="max-w-[120px] sm:max-w-none">
+                          <div className="font-medium break-words">{item.item?.name || 'N/A'}</div>
+                          <div className="text-xs text-muted-foreground sm:hidden break-words">
+                            {item.item?.sku || 'N/A'}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="p-2 text-xs sm:text-sm text-muted-foreground hidden sm:table-cell">
+                        {item.item?.sku || 'N/A'}
+                      </td>
+                      <td className="p-2 text-right text-xs sm:text-sm whitespace-nowrap">{item.weight}g</td>
+                      <td className="p-2 text-right text-xs sm:text-sm">{item.quantity}</td>
+                      <td className="p-2 text-right text-xs sm:text-sm whitespace-nowrap hidden md:table-cell">
+                        {formatCurrency(item.price)}
+                      </td>
+                      <td className="p-2 text-right text-xs sm:text-sm font-medium whitespace-nowrap">
+                        {formatCurrency(item.price * item.quantity)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* Totals */}
-          <div className="ml-auto w-64 space-y-2 border-t pt-4">
-            <div className="flex justify-between text-sm">
+          <div className="ml-auto w-full sm:w-64 space-y-2 border-t pt-4">
+            <div className="flex justify-between text-xs sm:text-sm">
               <span>Gold Value:</span>
-              <span>{formatCurrency(parseFloat(invoice.gold_value.toString()))}</span>
+              <span className="font-medium">{formatCurrency(parseFloat(invoice.gold_value.toString()))}</span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs sm:text-sm">
               <span>Making Charges:</span>
-              <span>
+              <span className="font-medium">
                 {formatCurrency(parseFloat(invoice.making_charges.toString()))}
               </span>
             </div>
-            <div className="flex justify-between text-sm">
+
+            {/* Show subtotal if there's a discount */}
+            {invoice.discount_value && invoice.discount_value > 0 && (
+              <>
+                <div className="flex justify-between text-xs sm:text-sm font-medium">
+                  <span>Subtotal:</span>
+                  <span>
+                    {formatCurrency(
+                      parseFloat(invoice.gold_value.toString()) +
+                      parseFloat(invoice.making_charges.toString())
+                    )}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs sm:text-sm text-green-600 dark:text-green-400">
+                  <span>
+                    Discount {invoice.discount_type === 'percentage' ? `(${invoice.discount_value}%)` : ''}:
+                  </span>
+                  <span>
+                    - {formatCurrency(
+                      invoice.discount_type === 'percentage'
+                        ? ((parseFloat(invoice.gold_value.toString()) + parseFloat(invoice.making_charges.toString())) * invoice.discount_value) / 100
+                        : invoice.discount_value
+                    )}
+                  </span>
+                </div>
+              </>
+            )}
+
+            <div className="flex justify-between text-xs sm:text-sm">
               <span>GST:</span>
-              <span>{formatCurrency(parseFloat(invoice.gst_amount.toString()))}</span>
+              <span className="font-medium">{formatCurrency(parseFloat(invoice.gst_amount.toString()))}</span>
             </div>
-            <div className="flex justify-between border-t pt-2 font-bold">
+            <div className="flex justify-between border-t pt-2 text-sm sm:text-base font-bold">
               <span>Grand Total:</span>
               <span>{formatCurrency(parseFloat(invoice.total_amount.toString()))}</span>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="mt-8 border-t pt-4 text-center text-sm text-muted-foreground">
+          <div className="mt-6 sm:mt-8 border-t pt-4 text-center text-xs sm:text-sm text-muted-foreground">
             <p>Thank you for your business!</p>
           </div>
         </CardContent>
@@ -177,4 +217,3 @@ export default function InvoiceView({ invoice, settings }: InvoiceViewProps) {
     </div>
   )
 }
-

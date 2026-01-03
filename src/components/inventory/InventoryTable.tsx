@@ -727,7 +727,14 @@ export default function InventoryTable({ items: initialItems }: InventoryTablePr
                             className="w-24"
                           />
                         ) : (
-                          `₹${item.making_charge}`
+                          <div className="flex items-center gap-1">
+                            <span>
+                              {item.making_charge_type === 'percentage' ? `${item.making_charge}%` : `₹${item.making_charge}`}
+                            </span>
+                            {item.making_charge_type === 'percentage' && (
+                              <span className="text-xs text-muted-foreground">(% of gold)</span>
+                            )}
+                          </div>
                         )}
                       </TableCell>
                     )}

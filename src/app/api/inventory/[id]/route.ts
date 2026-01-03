@@ -47,7 +47,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, metal_type, purity, gross_weight, net_weight, making_charge, quantity } = body
+    const { name, metal_type, purity, gross_weight, net_weight, making_charge, making_charge_type, quantity } = body
 
     // Verify item belongs to user
     const { data: existing } = await supabase
@@ -70,6 +70,7 @@ export async function PUT(
         gross_weight: parseFloat(gross_weight),
         net_weight: parseFloat(net_weight),
         making_charge: parseFloat(making_charge),
+        making_charge_type: making_charge_type || 'percentage',
         quantity: parseInt(quantity),
       })
       .eq('id', id)

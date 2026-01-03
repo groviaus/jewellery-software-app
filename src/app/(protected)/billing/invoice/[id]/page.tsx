@@ -69,8 +69,8 @@ export default async function InvoicePage({
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-bold">Invoice Details</h1>
+    <div className="space-y-4 sm:space-y-6">
+      <h1 className="text-2xl sm:text-3xl font-bold px-2 sm:px-0">Invoice Details</h1>
 
       <InvoiceView invoice={invoiceData} settings={settings} />
     </div>

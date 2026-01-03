@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { customer_id, items, gold_rate } = body
+    const { customer_id, items, gold_rate, discount_type, discount_value } = body
 
     if (!items || items.length === 0) {
       return NextResponse.json(
@@ -124,6 +124,8 @@ export async function POST(request: Request) {
         gst_amount: 0,
         gold_value: 0,
         making_charges: 0,
+        discount_type: discount_type || null,
+        discount_value: discount_value || 0,
       })
       .select()
       .single()
@@ -190,12 +192,21 @@ export async function POST(request: Request) {
     }
 
     // Calculate final totals
-    const gstAmount = calculateGST(totalGoldValue, totalMakingCharges, gstRate)
-    const grandTotal = calculateGrandTotal(
-      totalGoldValue,
-      totalMakingCharges,
-      gstAmount
-    )
+    const subtotal = totalGoldValue + totalMakingCharges
+
+    // Calculate discount
+    let discountAmount = 0
+    if (discount_value && discount_value > 0) {
+      if (discount_type === 'percentage') {
+        discountAmount = (subtotal * discount_value) / 100
+      } else {
+        discountAmount = discount_value
+      }
+    }
+
+    const afterDiscount = subtotal - discountAmount
+    const gstAmount = calculateGST(afterDiscount, 0, gstRate)
+    const grandTotal = afterDiscount + gstAmount
 
     // Update invoice with final totals
     const { data: updatedInvoice, error: updateError } = await supabase
@@ -205,6 +216,8 @@ export async function POST(request: Request) {
         gst_amount: gstAmount,
         gold_value: totalGoldValue,
         making_charges: totalMakingCharges,
+        discount_type: discount_type || null,
+        discount_value: discount_value || 0,
       })
       .eq('id', invoice.id)
       .select()

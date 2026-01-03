@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { name, metal_type, purity, gross_weight, net_weight, making_charge, quantity, sku } =
+    const { name, metal_type, purity, gross_weight, net_weight, making_charge, making_charge_type, quantity, sku } =
       body
 
     // Validate required fields
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
         gross_weight: parseFloat(gross_weight),
         net_weight: parseFloat(net_weight),
         making_charge: parseFloat(making_charge),
+        making_charge_type: making_charge_type || 'percentage',
         quantity: parseInt(quantity),
         sku,
       })

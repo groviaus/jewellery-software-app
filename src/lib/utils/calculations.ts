@@ -7,12 +7,25 @@ export function calculateGoldValue(weight: number, goldRate: number): number {
 
 /**
  * Calculate making charges
+ * @param weight - Weight in grams
+ * @param makingChargeValue - Either fixed amount per gram or percentage
+ * @param makingChargeType - 'fixed' for per gram amount, 'percentage' for % of gold value
+ * @param goldValue - Required when using percentage type
  */
 export function calculateMakingCharges(
   weight: number,
-  makingChargePerGram: number
+  makingChargeValue: number,
+  makingChargeType: 'fixed' | 'percentage' = 'fixed',
+  goldValue?: number
 ): number {
-  return weight * makingChargePerGram
+  if (makingChargeType === 'percentage') {
+    if (goldValue === undefined) {
+      throw new Error('Gold value is required for percentage-based making charges')
+    }
+    return (goldValue * makingChargeValue) / 100
+  }
+  // Fixed: per gram charge
+  return weight * makingChargeValue
 }
 
 /**

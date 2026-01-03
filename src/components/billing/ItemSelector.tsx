@@ -73,6 +73,7 @@ export default function ItemSelector({ onAddToCart }: ItemSelectorProps) {
         purity: item.purity,
         net_weight: item.net_weight,
         making_charge: item.making_charge,
+        making_charge_type: item.making_charge_type || 'percentage',
         quantity: item.quantity,
       },
       quantity: 1,
@@ -114,22 +115,22 @@ export default function ItemSelector({ onAddToCart }: ItemSelectorProps) {
         </div>
       </div>
 
-      <div className="max-h-96 overflow-y-auto rounded-md border">
+      <div className="max-h-96 overflow-y-auto overflow-x-auto rounded-md border scrollbar-hide">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>SKU</TableHead>
-              <TableHead>Weight (g)</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Metal</TableHead>
-              <TableHead className="text-right">Action</TableHead>
+          <TableHeader className="bg-muted/50">
+            <TableRow className="text-xs uppercase tracking-wider">
+              <TableHead className="px-2 h-10">Name</TableHead>
+              <TableHead className="px-2 h-10">SKU</TableHead>
+              <TableHead className="px-2 h-10">Weight</TableHead>
+              <TableHead className="px-2 h-10">Stock</TableHead>
+              <TableHead className="px-2 h-10">Metal</TableHead>
+              <TableHead className="text-right px-2 h-10">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredItems.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                   {searchQuery ? 'No items found' : 'No items in stock'}
                 </TableCell>
               </TableRow>
@@ -142,36 +143,34 @@ export default function ItemSelector({ onAddToCart }: ItemSelectorProps) {
                 return (
                   <TableRow
                     key={item.id}
-                    className={`${isOutOfStock ? 'opacity-50' : ''} ${isSelected ? 'bg-muted' : ''}`}
+                    className={`text-xs sm:text-sm ${isOutOfStock ? 'opacity-50' : ''} ${isSelected ? 'bg-muted' : ''}`}
                     onMouseEnter={() => setSelectedItemIndex(index)}
                   >
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{item.sku}</TableCell>
-                    <TableCell>{item.net_weight}g</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium px-2 py-2 whitespace-nowrap">{item.name}</TableCell>
+                    <TableCell className="text-muted-foreground px-2 py-2 whitespace-nowrap">{item.sku}</TableCell>
+                    <TableCell className="px-2 py-2 whitespace-nowrap">{item.net_weight}g</TableCell>
+                    <TableCell className="px-2 py-2">
                       <span className={`font-medium ${isOutOfStock
-                          ? 'text-destructive'
-                          : isLowStock
-                            ? 'text-orange-600 dark:text-orange-400'
-                            : 'text-green-600 dark:text-green-400'
+                        ? 'text-destructive'
+                        : isLowStock
+                          ? 'text-orange-600 dark:text-orange-400'
+                          : 'text-green-600 dark:text-green-400'
                         }`}>
                         {item.quantity}
                       </span>
-                      {isLowStock && !isOutOfStock && (
-                        <span className="ml-1 text-xs text-orange-600 dark:text-orange-400">(Low)</span>
-                      )}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
+                    <TableCell className="text-muted-foreground px-2 py-2 whitespace-nowrap">
                       {item.metal_type} {item.purity}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right px-2 py-2">
                       <Button
                         size="sm"
                         onClick={() => handleAddItem(item)}
                         disabled={isOutOfStock}
+                        className="h-8 px-2"
                         variant={isLowStock && !isOutOfStock ? 'outline' : 'default'}
                       >
-                        <Plus className="mr-1 h-4 w-4" />
+                        <Plus className="mr-1 h-3.5 w-3.5" />
                         Add
                       </Button>
                     </TableCell>

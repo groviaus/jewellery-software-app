@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,6 +22,8 @@ export default function POSScreen() {
   const [cart, setCart] = useState<CartItem[]>([])
   const [customerId, setCustomerId] = useState<string | null>(null)
   const [goldRate, setGoldRate] = useState<string>('')
+  const [silverRate, setSilverRate] = useState<string>('')
+  const [diamondRate, setDiamondRate] = useState<string>('')
   const [error, setError] = useState('')
   const [isFetchingGoldRate, setIsFetchingGoldRate] = useState(false)
   const [goldRatesByCarat, setGoldRatesByCarat] = useState<{
@@ -31,6 +33,8 @@ export default function POSScreen() {
     '14K': number
     '10K': number
   } | null>(null)
+  const [discountType, setDiscountType] = useState<'percentage' | 'fixed'>('percentage')
+  const [discountValue, setDiscountValue] = useState(0)
 
   // Fetch settings using React Query hook
   const { data: settings } = useSettings()
@@ -102,6 +106,17 @@ export default function POSScreen() {
     )
   }, [])
 
+  const handleDiscountChange = (type: 'percentage' | 'fixed', value: number) => {
+    setDiscountType(type)
+    setDiscountValue(value)
+  }
+
+  // Get unique metal types from cart
+  const metalTypesInCart = useMemo(() => {
+    const types = new Set(cart.map(item => item.item.metal_type))
+    return Array.from(types)
+  }, [cart])
+
   const handleFetchGoldRate = async () => {
     setIsFetchingGoldRate(true)
     try {
@@ -156,9 +171,21 @@ export default function POSScreen() {
       return
     }
 
-    if (!goldRate || parseFloat(goldRate) <= 0) {
-      setError('Please enter a valid gold rate')
-      toast.warning('Invalid gold rate', 'Please enter a valid gold rate')
+    // Validate rates for each metal type in cart
+    const missingRates: string[] = []
+    if (metalTypesInCart.includes('Gold') && (!goldRate || parseFloat(goldRate) <= 0)) {
+      missingRates.push('Gold')
+    }
+    if (metalTypesInCart.includes('Silver') && (!silverRate || parseFloat(silverRate) <= 0)) {
+      missingRates.push('Silver')
+    }
+    if (metalTypesInCart.includes('Diamond') && (!diamondRate || parseFloat(diamondRate) <= 0)) {
+      missingRates.push('Diamond')
+    }
+
+    if (missingRates.length > 0) {
+      setError(`Please enter valid rate(s) for: ${missingRates.join(', ')}`)
+      toast.warning('Missing rates', `Please enter rate(s) for: ${missingRates.join(', ')}`)
       return
     }
 
@@ -168,7 +195,11 @@ export default function POSScreen() {
       const invoice = await createInvoiceMutation.mutateAsync({
         customer_id: customerId,
         items: cart,
-        gold_rate: parseFloat(goldRate),
+        gold_rate: goldRate ? parseFloat(goldRate) : 0,
+        silver_rate: silverRate ? parseFloat(silverRate) : 0,
+        diamond_rate: diamondRate ? parseFloat(diamondRate) : 0,
+        discount_type: discountValue > 0 ? discountType : undefined,
+        discount_value: discountValue > 0 ? discountValue : undefined,
       })
 
       // Save gold rate to history
@@ -196,42 +227,44 @@ export default function POSScreen() {
         <Card>
           <CardHeader className="pb-3 sm:pb-6">
             <CardTitle className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <span className="text-lg sm:text-xl">Gold Rate</span>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleFetchGoldRate}
-                  disabled={isFetchingGoldRate}
-                  className="text-xs flex-1 sm:flex-none"
-                >
-                  <RefreshCw className={`mr-1 h-3 w-3 ${isFetchingGoldRate ? 'animate-spin' : ''}`} />
-                  <span className="hidden sm:inline">{isFetchingGoldRate ? 'Fetching...' : 'Fetch Current Rate'}</span>
-                  <span className="sm:hidden">{isFetchingGoldRate ? 'Fetching...' : 'Fetch Rate'}</span>
-                </Button>
-                {getGoldRateHistory().length > 0 && (
+              <span className="text-lg sm:text-xl">Metal Rates</span>
+              {metalTypesInCart.includes('Gold') && (
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={() => {
-                      const history = getGoldRateHistory()
-                      if (history.length > 0) {
-                        setGoldRate(history[0].rate.toString())
-                      }
-                    }}
+                    onClick={handleFetchGoldRate}
+                    disabled={isFetchingGoldRate}
                     className="text-xs flex-1 sm:flex-none"
                   >
-                    <History className="mr-1 h-3 w-3" />
-                    Last: ₹{getLastGoldRate()?.toFixed(2)}
+                    <RefreshCw className={`mr-1 h-3 w-3 ${isFetchingGoldRate ? 'animate-spin' : ''}`} />
+                    <span className="hidden sm:inline">{isFetchingGoldRate ? 'Fetching...' : 'Fetch Gold Rate'}</span>
+                    <span className="sm:hidden">{isFetchingGoldRate ? 'Fetching...' : 'Fetch'}</span>
                   </Button>
-                )}
-              </div>
+                  {getGoldRateHistory().length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const history = getGoldRateHistory()
+                        if (history.length > 0) {
+                          setGoldRate(history[0].rate.toString())
+                        }
+                      }}
+                      className="text-xs flex-1 sm:flex-none"
+                    >
+                      <History className="mr-1 h-3 w-3" />
+                      Last: ₹{getLastGoldRate()?.toFixed(2)}
+                    </Button>
+                  )}
+                </div>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Display rates by carat if available */}
-              {goldRatesByCarat && (
+              {goldRatesByCarat && metalTypesInCart.includes('Gold') && (
                 <div className="rounded-lg border bg-muted/50 p-2 sm:p-3">
                   <Label className="text-xs font-semibold mb-2 block">Current Market Rates (₹ per gram)</Label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs sm:text-sm">
@@ -271,23 +304,59 @@ export default function POSScreen() {
                   </div>
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="gold_rate">Current Gold Rate (₹ per gram)</Label>
-                <Input
-                  id="gold_rate"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={goldRate}
-                  onChange={(e) => setGoldRate(e.target.value)}
-                  placeholder="Enter gold rate"
-                />
-              </div>
 
-              {/* Quick select buttons for recent rates */}
-              {getGoldRateHistory().length > 0 && (
+              {/* Gold Rate Input */}
+              {metalTypesInCart.includes('Gold') && (
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Recent Rates</Label>
+                  <Label htmlFor="gold_rate">Gold Rate (₹ per gram) *</Label>
+                  <Input
+                    id="gold_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={goldRate}
+                    onChange={(e) => setGoldRate(e.target.value)}
+                    placeholder="Enter gold rate"
+                  />
+                </div>
+              )}
+
+              {/* Silver Rate Input */}
+              {metalTypesInCart.includes('Silver') && (
+                <div className="space-y-2">
+                  <Label htmlFor="silver_rate">Silver Rate (₹ per gram) *</Label>
+                  <Input
+                    id="silver_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={silverRate}
+                    onChange={(e) => setSilverRate(e.target.value)}
+                    placeholder="Enter silver rate"
+                  />
+                </div>
+              )}
+
+              {/* Diamond Rate Input */}
+              {metalTypesInCart.includes('Diamond') && (
+                <div className="space-y-2">
+                  <Label htmlFor="diamond_rate">Diamond Rate (₹ per carat) *</Label>
+                  <Input
+                    id="diamond_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={diamondRate}
+                    onChange={(e) => setDiamondRate(e.target.value)}
+                    placeholder="Enter diamond rate"
+                  />
+                </div>
+              )}
+
+              {/* Quick select buttons for recent gold rates */}
+              {getGoldRateHistory().length > 0 && metalTypesInCart.includes('Gold') && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Recent Gold Rates</Label>
                   <div className="flex flex-wrap gap-2">
                     {getGoldRateHistory().slice(0, 3).map((entry, idx) => (
                       <Button
@@ -302,6 +371,10 @@ export default function POSScreen() {
                     ))}
                   </div>
                 </div>
+              )}
+
+              {cart.length === 0 && (
+                <p className="text-sm text-muted-foreground">Add items to cart to see required metal rates</p>
               )}
             </div>
           </CardContent>
@@ -347,11 +420,16 @@ export default function POSScreen() {
             <InvoicePreview
               cart={cart}
               goldRate={goldRate ? parseFloat(goldRate) : 0}
+              silverRate={silverRate ? parseFloat(silverRate) : 0}
+              diamondRate={diamondRate ? parseFloat(diamondRate) : 0}
               gstRate={gstRate}
               onRemoveItem={removeFromCart}
               onUpdateItem={updateCartItem}
               onReorderItems={reorderCartItems}
               onDuplicateItem={duplicateCartItem}
+              discountType={discountType}
+              discountValue={discountValue}
+              onDiscountChange={handleDiscountChange}
             />
 
             <div className="mt-4 sm:mt-6 space-y-2">

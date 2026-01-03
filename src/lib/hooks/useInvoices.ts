@@ -95,6 +95,10 @@ async function createInvoice(invoiceData: {
   customer_id: string | null
   items: any[]
   gold_rate: number
+  silver_rate?: number
+  diamond_rate?: number
+  discount_type?: 'percentage' | 'fixed'
+  discount_value?: number
 }): Promise<Invoice> {
   const response = await fetch('/api/billing/invoice', {
     method: 'POST',

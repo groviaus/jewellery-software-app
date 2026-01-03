@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import type { Item, ItemFormData, Purity } from '@/lib/types/inventory'
+import type { Item, ItemFormData, Purity, MakingChargeType } from '@/lib/types/inventory'
 import {
   useCreateInventoryItem,
   useUpdateInventoryItem,
@@ -30,6 +30,7 @@ const itemSchema = z.object({
   gross_weight: z.number().min(0, 'Gross weight must be positive'),
   net_weight: z.number().min(0, 'Net weight must be positive'),
   making_charge: z.number().min(0, 'Making charge must be positive'),
+  making_charge_type: z.enum(['fixed', 'percentage']),
   quantity: z.number().int().min(0, 'Quantity must be non-negative'),
   sku: z.string().min(1, 'SKU is required'),
 })
@@ -57,24 +58,41 @@ export default function ItemForm({ initialData }: ItemFormProps) {
     resolver: zodResolver(itemSchema),
     defaultValues: initialData
       ? {
-          name: initialData.name,
-          metal_type: initialData.metal_type,
-          purity: initialData.purity,
-          gross_weight: initialData.gross_weight,
-          net_weight: initialData.net_weight,
-          making_charge: initialData.making_charge,
-          quantity: initialData.quantity,
-          sku: initialData.sku,
-        }
+        name: initialData.name,
+        metal_type: initialData.metal_type,
+        purity: initialData.purity,
+        gross_weight: initialData.gross_weight,
+        net_weight: initialData.net_weight,
+        making_charge: initialData.making_charge,
+        making_charge_type: initialData.making_charge_type || 'percentage',
+        quantity: initialData.quantity,
+        sku: initialData.sku,
+      }
       : {
-          metal_type: 'Gold',
-          purity: '22K',
-          quantity: 1,
-        },
+        metal_type: 'Gold',
+        purity: '22K',
+        making_charge_type: 'percentage',
+        quantity: 1,
+      },
   })
 
   const metalType = watch('metal_type')
+  const makingChargeType = watch('making_charge_type')
   const isLoading = createMutation.isPending || updateMutation.isPending
+
+  // Auto-update purity when metal type changes
+  useEffect(() => {
+    const currentPurity = watch('purity')
+
+    // Only auto-update if not editing an existing item or if purity is incompatible
+    if (metalType === 'Gold' && !['22K', '18K', '14K', '24K'].includes(currentPurity)) {
+      setValue('purity', '22K')
+    } else if (metalType === 'Silver' && !['925', 'Other'].includes(currentPurity)) {
+      setValue('purity', '925')
+    } else if (metalType === 'Diamond' && currentPurity !== 'Other') {
+      setValue('purity', 'Other')
+    }
+  }, [metalType, setValue, watch])
 
   const onSubmit = async (data: ItemFormValues) => {
     setError('')
@@ -83,8 +101,9 @@ export default function ItemForm({ initialData }: ItemFormProps) {
       const formData: ItemFormData = {
         ...data,
         purity: data.purity as Purity,
+        making_charge_type: data.making_charge_type as MakingChargeType,
       }
-      
+
       if (initialData) {
         await updateMutation.mutateAsync({ id: initialData.id, data: formData })
         toast.success('Item updated successfully', data.name)
@@ -181,12 +200,25 @@ export default function ItemForm({ initialData }: ItemFormProps) {
                   <SelectValue placeholder="Select purity" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="22K">22K</SelectItem>
-                  <SelectItem value="18K">18K</SelectItem>
-                  <SelectItem value="14K">14K</SelectItem>
-                  <SelectItem value="24K">24K</SelectItem>
-                  <SelectItem value="925">925</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                  {metalType === 'Gold' && (
+                    <>
+                      <SelectItem value="24K">24K (99.9% Pure)</SelectItem>
+                      <SelectItem value="22K">22K (91.6% Pure)</SelectItem>
+                      <SelectItem value="18K">18K (75% Pure)</SelectItem>
+                      <SelectItem value="14K">14K (58.3% Pure)</SelectItem>
+                    </>
+                  )}
+                  {metalType === 'Silver' && (
+                    <>
+                      <SelectItem value="925">925 Sterling Silver</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </>
+                  )}
+                  {metalType === 'Diamond' && (
+                    <>
+                      <SelectItem value="Other">Natural Diamond</SelectItem>
+                    </>
+                  )}
                 </SelectContent>
               </Select>
               {errors.purity && (
@@ -227,19 +259,50 @@ export default function ItemForm({ initialData }: ItemFormProps) {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="making_charge">Making Charge (₹) *</Label>
+              <Label htmlFor="making_charge_type">Making Charge Type *</Label>
+              <Select
+                value={makingChargeType}
+                onValueChange={(value) =>
+                  setValue('making_charge_type', value as 'fixed' | 'percentage')
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fixed">Fixed Amount (₹)</SelectItem>
+                  <SelectItem value="percentage">Percentage (%)</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.making_charge_type && (
+                <p className="text-sm text-destructive">{errors.making_charge_type.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="making_charge">
+                Making Charge {makingChargeType === 'percentage' ? '(%)' : '(₹)'} *
+              </Label>
               <Input
                 id="making_charge"
                 type="number"
-                step="0.01"
+                step={makingChargeType === 'percentage' ? '0.1' : '0.01'}
+                max={makingChargeType === 'percentage' ? '100' : undefined}
                 {...register('making_charge', { valueAsNumber: true })}
-                placeholder="500.00"
+                placeholder={makingChargeType === 'percentage' ? '10.0' : '500.00'}
               />
               {errors.making_charge && (
                 <p className="text-sm text-destructive">{errors.making_charge.message}</p>
               )}
+              {makingChargeType === 'percentage' && (
+                <p className="text-xs text-muted-foreground">
+                  Will be calculated as % of gold value during billing
+                </p>
+              )}
             </div>
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantity *</Label>
               <Input

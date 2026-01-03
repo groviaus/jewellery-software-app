@@ -7,6 +7,8 @@ export interface Invoice {
   gst_amount: number
   gold_value: number
   making_charges: number
+  discount_type?: 'percentage' | 'fixed' | null
+  discount_value?: number
   created_at: string
   customer?: {
     name: string
@@ -40,6 +42,7 @@ export interface CartItem {
     purity: string
     net_weight: number
     making_charge: number
+    making_charge_type: 'fixed' | 'percentage'
     quantity: number
   }
   quantity: number
